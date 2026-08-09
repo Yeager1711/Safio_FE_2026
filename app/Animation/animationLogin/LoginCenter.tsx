@@ -90,8 +90,8 @@ const LoginCenter: React.FC<LoginCenterProps> = ({ startAnimation, fullName, onF
                     >
                         <div className={styles.image_logo}>
                             <Image
-                                src="/images/logo.png"
-                                alt="Minto Logo"
+                                src="/images/logo_safio.png"
+                                alt="Safio AI Care Logo"
                                 width={100}
                                 height={100}
                                 style={{ borderRadius: '1rem', objectFit: 'cover' }}
@@ -99,7 +99,7 @@ const LoginCenter: React.FC<LoginCenterProps> = ({ startAnimation, fullName, onF
                         </div>
                         {expandFlow2 && (
                             <div className={`${styles.content} ${showContent ? styles.show : ''}`}>
-                                <p>Chào mừng bạn đến ⚡Minto</p>
+                                <p>Chào mừng bạn đến Safio</p>
                                 <h3>{fullName}</h3>
                             </div>
                         )}

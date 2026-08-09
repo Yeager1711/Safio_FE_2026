@@ -1,0 +1,90 @@
+.stageBox {
+  position: absolute;
+  max-width: 320px;
+  width: 100%;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 5;
+}
+.stageBox h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.4;
+}
+.stageBox .glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.stageBox:hover .glow {
+  opacity: 1;
+}
+@media (max-width: 768px) {
+  .stageBox {
+    max-width: 160px;
+    padding: 1rem;
+  }
+  .stageBox h3 {
+    font-size: 1.1rem;
+  }
+}
+@media (max-width: 480px) {
+  .stageBox {
+    max-width: 140px;
+  }
+  .stageBox h3 {
+    font-size: 1rem;
+  }
+}
+
+.topLeft {
+  top: 10%;
+  left: 8%;
+}
+
+.bottomLeft {
+  bottom: 10%;
+  left: 12%;
+}
+
+.topRight {
+  top: 10%;
+  right: 12%;
+}
+
+.bottomRight {
+  bottom: 10%;
+  right: 8%;
+}
+
+@media (max-width: 768px) {
+  .topLeft {
+    top: 5%;
+    left: 5%;
+  }
+  .bottomLeft {
+    bottom: 5%;
+    left: 5%;
+  }
+  .topRight {
+    top: 5%;
+    right: 5%;
+  }
+  .bottomRight {
+    bottom: 5%;
+    right: 5%;
+  }
+}/*# sourceMappingURL=StageBox.module.css.map */

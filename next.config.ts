@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import path from 'path';
+
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
@@ -7,9 +8,20 @@ const nextConfig: NextConfig = {
     images: {
         unoptimized: true,
     },
-    /* config options here */
+    productionBrowserSourceMaps: false, // 🚫 Tắt source map khi build
+
     webpack: (config) => {
         config.resolve.alias['~'] = path.resolve(__dirname, 'src');
+
+        // ✅ Bỏ qua lỗi từ MetaMask (và các extension khác)
+        if (isDev) {
+            config.ignoreWarnings = [
+                ...(config.ignoreWarnings || []),
+                /Failed to connect to MetaMask/,
+                /chrome-extension/,
+            ];
+        }
+
         return config;
     },
 };

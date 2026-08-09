@@ -11,7 +11,6 @@
   z-index: 99999 !important;
   opacity: 1;
   transition: opacity 1s ease-in-out;
-  -webkit-backdrop-filter: blur(1rem);
   backdrop-filter: blur(1rem);
 }
 

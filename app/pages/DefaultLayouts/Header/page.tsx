@@ -3,37 +3,65 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
-import styles from './header.module.scss'; // Giả sử stylesheet của Header được sử dụng
+import styles from './header.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faChevronLeft, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faChevronLeft, faSignOutAlt, faBars } from '@fortawesome/free-solid-svg-icons';
 import LoginPopup from '../../../v2/login/Login';
 import SignUpPopup from '../../../v2/signup/SignUp';
 import { useApi } from 'app/lib/apiContext/apiContext';
+import GeminiReply from 'app/AI_Questions/AI_Service/genmini_reply/GenimiReply';
 
-// Kết hợp styles của cả Header và UserPopup
 const cx = classNames.bind(styles);
 
-// Định nghĩa interface cho UserProfile
-interface UserProfile {
-    user_id: number;
-    full_name: string;
-    email: string;
-    phone: string | null;
-    address: string | null;
-    role: {
-        role_id: number;
-        name: string;
+export interface UserProfile {
+    user: {
+        user_id: string | { _id: string; full_name: string; email: string };
+        full_name: string;
+        email: string;
+        age?: number;
+        phone_number?: string;
+        role: string;
+        created_at: string;
     };
+    relatives: Array<{
+        _id: string;
+        full_name: string;
+        relationship: string;
+        phone_number?: string;
+        email?: string;
+        acceptance_status: string;
+    }>;
+    cameras: Array<{
+        _id: string;
+        cam_name: string;
+        location: string;
+        ip_address?: string;
+        status: string;
+        camera_type: string;
+    }>;
+    activity_logs: Array<{
+        log_id: string;
+        action?: string;
+        fall_type?: string;
+        behavior?: string;
+        created: string;
+        warning?: {
+            level: string;
+            description?: string;
+        };
+        camera?: {
+            cam_name: string;
+            location: string;
+        };
+    }>;
 }
 
-// Định nghĩa interface cho UserPopupProps
 interface UserPopupProps {
     isOpen: boolean;
     onClose: () => void;
     onLogout: () => void;
 }
 
-// Component UserPopup
 const UserPopup: React.FC<UserPopupProps> = ({ isOpen, onClose, onLogout }) => {
     const popupRef = useRef<HTMLDivElement>(null);
     const { getUserProfile } = useApi();
@@ -48,7 +76,7 @@ const UserPopup: React.FC<UserPopupProps> = ({ isOpen, onClose, onLogout }) => {
                 setIsLoading(true);
                 try {
                     const userData = await getUserProfile();
-                    setUser(userData);
+                    setUser(userData as unknown as UserProfile);
                     setError('');
                 } catch (err: unknown) {
                     let errorMessage = 'Không thể lấy thông tin người dùng';
@@ -86,16 +114,11 @@ const UserPopup: React.FC<UserPopupProps> = ({ isOpen, onClose, onLogout }) => {
     if (!isOpen) return null;
 
     const handleAccountInfo = () => {
-        if (user?.role.name === 'admin') {
+        if (user?.user.role === 'admin') {
             router.push('/admin/dashboard');
         } else {
             router.push('/account/info');
         }
-        onClose();
-    };
-
-    const handleNavigation = (path: string) => {
-        router.push(path);
         onClose();
     };
 
@@ -110,21 +133,13 @@ const UserPopup: React.FC<UserPopupProps> = ({ isOpen, onClose, onLogout }) => {
                 </div>
             ) : user ? (
                 <div className={cx('user-info')} onClick={handleAccountInfo}>
-                    <h3>
-                        {user.user_id}_{user.full_name}
-                    </h3>
-                    <p>{user.email}</p>
+                    <h3>{user.user.full_name}</h3>
+                    <p>{user.user.email}</p>
                 </div>
             ) : (
                 <p>Loading...</p>
             )}
-            <div className={styles.control}>
-                <button onClick={() => handleNavigation('/account/templates')}>Template đã chọn</button>
-                <button onClick={() => handleNavigation('/account/PaymentHistory')}>Lịch sử thanh toán</button>
-                {user?.role.name === 'customer' && (
-                    <button onClick={() => handleNavigation('/account/error_handling')}>Phản hồi</button>
-                )}
-            </div>
+
             <button className={cx('logout-btn')} onClick={onLogout}>
                 <FontAwesomeIcon icon={faSignOutAlt} /> Logout
             </button>
@@ -132,19 +147,25 @@ const UserPopup: React.FC<UserPopupProps> = ({ isOpen, onClose, onLogout }) => {
     );
 };
 
-// Component Header
 const navItems = [
-    { name: 'Trang chủ', path: '/' },
-    { name: 'Hướng dẫn', path: '/instruct' },
+    { name: 'Home', path: '/' },
+    { name: 'About Us', path: '/aboutUs' },
+    { name: 'Service', path: '/service' },
+    { name: 'AI Service', path: '/AI' },
 ];
 
 function Header() {
     const pathname = usePathname();
+    const router = useRouter();
+
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isNavBoxOpen, setIsNavBoxOpen] = useState(false);
     const [isUserPopupOpen, setIsUserPopupOpen] = useState(false);
     const [accessToken, setAccessToken] = useState('');
+    const [showGeminiReply, setShowGeminiReply] = useState(false);
+    const [isNavHidden, setIsNavHidden] = useState(false); // ← State điều khiển ẩn nav
+
     const isInitialLogin = useRef(true);
 
     useEffect(() => {
@@ -157,16 +178,6 @@ function Header() {
             isInitialLogin.current = false;
         }
     }, [accessToken, isUserPopupOpen, isLoginOpen]);
-
-    const handleOpenRegister = () => {
-        setIsLoginOpen(false);
-        setIsRegisterOpen(true);
-    };
-
-    const handleOpenLoginFromRegister = () => {
-        setIsRegisterOpen(false);
-        setIsLoginOpen(true);
-    };
 
     const toggleNavBox = () => {
         setIsNavBoxOpen(!isNavBoxOpen);
@@ -199,23 +210,40 @@ function Header() {
         isInitialLogin.current = true;
     };
 
-    const displayedNavItem = pathname === '/' ? navItems[1] : navItems[0];
+    // Xử lý click AI Service
+    const handleAIServiceClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setShowGeminiReply(true);
+        setIsNavHidden(true);
+    };
+
+    const handleCloseGeminiReply = () => {
+        setShowGeminiReply(false);
+        setIsNavHidden(false);
+    };
+
+    const getNavIcon = () => {
+        return isNavBoxOpen ? faChevronLeft : faBars;
+    };
 
     return (
         <aside
             className={cx('sidebar', {
-                'display-none': pathname.includes('/template') || pathname.startsWith('/admin'),
+                'display-none': pathname.includes('/admin') || pathname.startsWith('/account/info'),
             })}
         >
             <div className={styles.margin}>
                 <div className={cx('logo', { 'logo-hidden': isNavBoxOpen })}>
-                    <img src="/images/logo.png" alt="" />
+                    <img src="/images/logo_safio.png" alt="" />
+                    Sa <strong>fio</strong>
                 </div>
-                <div className={cx('nav-container')}>
-                    <div className={cx('user-container')}>
+
+                {/* Nav Container */}
+                <div className={cx('nav-container', { hidden: isNavHidden })}>
+                    <div className={cx('n-container')}>
                         <div className={cx('chevron_expend', { 'chevron_expend-open': isNavBoxOpen })}>
                             <div className={cx('chevron', { 'chevron-open': isNavBoxOpen })} onClick={toggleNavBox}>
-                                <FontAwesomeIcon icon={faChevronLeft} />
+                                <FontAwesomeIcon icon={getNavIcon()} style={{ fontSize: '3rem' }} />
                             </div>
                             <ul className={cx('nav', { 'nav-open': isNavBoxOpen })}>
                                 {navItems.map((item) => (
@@ -223,45 +251,65 @@ function Header() {
                                         key={item.name}
                                         className={cx({
                                             active: pathname === item.path,
-                                            'nav-hidden': item.path !== displayedNavItem.path,
                                         })}
                                     >
-                                        <Link href={item.path}>{item.name}</Link>
+                                        {item.name === 'AI Service' ? (
+                                            <a href="#" onClick={handleAIServiceClick}>
+                                                {item.name}
+                                            </a>
+                                        ) : (
+                                            <Link href={item.path}>{item.name}</Link>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
                         </div>
-                        {!accessToken && (
-                            <div className={cx('user_1')} onClick={handleOpenLogin}>
-                                <FontAwesomeIcon icon={faUser} />
-                            </div>
-                        )}
-                        {accessToken && (
-                            <div className={cx('user_2')} onClick={handleOpenUserPopup}>
-                                <FontAwesomeIcon icon={faUser} />
-                            </div>
-                        )}
-                        {accessToken && isUserPopupOpen && (
-                            <UserPopup
-                                isOpen={isUserPopupOpen}
-                                onClose={() => setIsUserPopupOpen(false)}
-                                onLogout={handleLogout}
-                            />
-                        )}
                     </div>
                 </div>
+
+                {/* User Icon */}
+                <div>
+                    {!accessToken && (
+                        <div className={cx('user_1')} onClick={handleOpenLogin}>
+                            <FontAwesomeIcon icon={faUser} />
+                        </div>
+                    )}
+                    {accessToken && (
+                        <div className={cx('user_2')} onClick={handleOpenUserPopup}>
+                            <FontAwesomeIcon icon={faUser} />
+                        </div>
+                    )}
+                    {accessToken && isUserPopupOpen && (
+                        <UserPopup
+                            isOpen={isUserPopupOpen}
+                            onClose={() => setIsUserPopupOpen(false)}
+                            onLogout={handleLogout}
+                        />
+                    )}
+                </div>
             </div>
+
+            {/* Popups */}
             <LoginPopup
                 isOpen={isLoginOpen}
                 onClose={handleCloseLogin}
-                onOpenRegister={handleOpenRegister}
+                onOpenRegister={() => {
+                    setIsLoginOpen(false);
+                    setIsRegisterOpen(true);
+                }}
                 onLoginSuccess={handleLoginSuccess}
             />
             <SignUpPopup
                 isOpen={isRegisterOpen}
-                onClose={handleOpenLoginFromRegister}
+                onClose={() => {
+                    setIsRegisterOpen(false);
+                    setIsLoginOpen(true);
+                }}
                 onSubmit={(data) => console.log('Register data:', data)}
             />
+
+            {/* Gemini Reply */}
+            {showGeminiReply && <GeminiReply onClose={handleCloseGeminiReply} />}
         </aside>
     );
 }

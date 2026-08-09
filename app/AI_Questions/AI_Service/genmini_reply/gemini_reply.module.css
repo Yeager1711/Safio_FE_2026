@@ -1,0 +1,407 @@
+@charset "UTF-8";
+.gemini_reply {
+  --c1: rgba(102, 153, 255, 0.55);
+  --c2: rgba(204, 102, 255, 0.55);
+  position: fixed;
+  top: 5%;
+  left: 5%;
+  right: 5%;
+  bottom: 5%;
+  max-width: 100%;
+  width: 100%;
+  height: 90%;
+  margin: auto;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+}
+.gemini_reply.opening {
+  animation: translateIn 0.4s ease-out forwards;
+}
+.gemini_reply.closing {
+  animation: translateOut 0.5s ease-out forwards;
+}
+.gemini_reply .close_button {
+  position: absolute;
+  top: 10%;
+  right: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  z-index: 9999999 !important;
+}
+.gemini_reply .close_button:hover {
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+.gemini_reply .model {
+  height: 100%;
+}
+.gemini_reply .model .wrapper {
+  height: 100%;
+  position: relative;
+  border: none;
+}
+.gemini_reply .model .wrapper .input_question {
+  margin: 0 auto 4rem auto;
+  max-width: 40rem;
+  width: 70%;
+  padding: 1.5rem;
+  border-radius: 2rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  z-index: 99999 !important;
+  margin-top: -2rem;
+  position: fixed;
+  bottom: -3%;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+@media (max-width: 768px) {
+  .gemini_reply .model .wrapper .input_question {
+    max-width: 35rem;
+    margin-top: -2rem;
+    width: 95%;
+  }
+}
+@media (max-width: 480px) {
+  .gemini_reply .model .wrapper .input_question {
+    margin-top: -2rem;
+    max-width: 29rem;
+    width: 95%;
+  }
+}
+.gemini_reply .model .wrapper .input_question.focused {
+  max-width: 60rem;
+  width: 85%;
+  box-shadow: 0 0 1rem rgba(138, 177, 255, 0.5), 0 0 5rem rgba(102, 153, 255, 0.4), 0 0 10rem rgba(102, 153, 255, 0.3);
+  border-color: rgba(102, 153, 255, 0.6);
+  padding: 1.5rem;
+  border-radius: 2rem;
+  background: rgb(255, 255, 255);
+  height: 6rem;
+}
+.gemini_reply .model .wrapper .input_question .hidden {
+  display: none !important;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper {
+  flex: 1;
+  position: relative;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper textarea {
+  background: none;
+  color: #333;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  width: 100%;
+  resize: none;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper textarea::-webkit-scrollbar {
+  display: none;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper textarea::-moz-placeholder {
+  color: #666;
+  font-size: 1.5rem;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper textarea::placeholder {
+  color: #666;
+  font-size: 1.5rem;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper .colon {
+  position: absolute;
+  bottom: -2rem;
+  left: 1rem;
+  font-size: 1.6rem;
+  color: #333;
+}
+.gemini_reply .model .wrapper .input_question .textareaWrapper svg {
+  position: absolute;
+  bottom: -1rem;
+  right: -1rem;
+  padding: 1rem;
+  border-radius: 5rem;
+  font-size: 2rem;
+  cursor: pointer;
+  background: #637fff;
+  color: #fff;
+}
+.gemini_reply .model .wrapper .aiContainer {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  border: none;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), height 0.7s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.7s cubic-bezier(0.22, 1, 0.36, 1), padding 0.7s cubic-bezier(0.22, 1, 0.36, 1), top 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(180deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0.88) 60%, rgba(0, 0, 0, 0.5) 90%, rgba(0, 0, 0, 0.01) 100%);
+  backdrop-filter: blur(5px) saturate(180%);
+  -webkit-backdrop-filter: blur(5px) saturate(180%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), inset 0 0.5rem 0.5rem rgba(255, 255, 255, 0.15);
+  isolation: isolate;
+  overflow: hidden;
+}
+.gemini_reply .model .wrapper .aiContainer::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  border: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.1), transparent);
+  backdrop-filter: blur(10rem) saturate(180%);
+  -webkit-backdrop-filter: blur(10rem) saturate(180%);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+.gemini_reply .model .wrapper .aiContainer {
+  /* ================== TRẠNG THÁI MẶC ĐỊNH (Input) ================== */
+}
+.gemini_reply .model .wrapper .aiContainer.questions {
+  width: 8rem;
+  height: 2.5rem;
+  border-radius: 5rem;
+  padding: 0.5rem 1rem;
+  background: #111;
+}
+.gemini_reply .model .wrapper .aiContainer.thinking {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  padding: 0;
+}
+.gemini_reply .model .wrapper .aiContainer.expanded {
+  width: 45%;
+  max-height: 75% !important;
+  min-height: 12rem;
+  border-radius: 5rem;
+  padding: 2rem;
+  overflow-y: auto;
+}
+@media (max-width: 768px) {
+  .gemini_reply .model .wrapper .aiContainer.expanded {
+    width: 90%;
+  }
+}
+@media (max-width: 480px) {
+  .gemini_reply .model .wrapper .aiContainer.expanded {
+    width: 95%;
+  }
+}
+.gemini_reply .model .wrapper .aiContainer::-webkit-scrollbar {
+  display: none;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb {
+  position: relative;
+  width: 7rem;
+  height: 7rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  flex-shrink: 0;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland {
+  position: relative;
+  max-width: 30rem;
+  width: 90%;
+  height: 6rem;
+  border-radius: 999rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  margin: auto;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader {
+  position: relative;
+  width: 3.6rem;
+  height: 3.6rem;
+  margin: auto;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span {
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: #fff;
+  filter: blur(0.1rem) drop-shadow(0 0 0.4rem rgba(255, 255, 255, 0.9));
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span:nth-child(1) {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 0s;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span:nth-child(2) {
+  top: 20%;
+  right: 0;
+  animation-delay: 0.15s;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span:nth-child(3) {
+  bottom: 20%;
+  right: 0;
+  animation-delay: 0.3s;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span:nth-child(4) {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 0.45s;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span:nth-child(5) {
+  bottom: 20%;
+  left: 0;
+  animation-delay: 0.6s;
+}
+.gemini_reply .model .wrapper .aiContainer .aiOrb .dynamicIsland .siriLoader span:nth-child(6) {
+  top: 20%;
+  left: 0;
+  animation-delay: 0.75s;
+}
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.35;
+    scale: 0.75;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.4;
+  }
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: #fff !important;
+  max-height: 80%;
+  overflow-y: scroll;
+  animation: messageAppear 0.5s ease-out;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent::-webkit-scrollbar {
+  display: none;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .message .link {
+  color: #1e88e5;
+  /* Xanh đẹp */
+  text-decoration: underline;
+  font-weight: 500;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .message .link:hover {
+  color: #1565c0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@keyframes messageAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .message.botMessage {
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 1.4rem;
+  line-height: 2;
+  color: #fff;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .message.userMessage {
+  align-self: flex-end;
+  max-width: 95%;
+  padding: 1rem 1.5rem;
+  border-radius: 3rem 0 3rem 3rem;
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 1.4rem;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .messageContent_bot .bulletList {
+  padding-left: 0.5rem;
+  margin: 0.8rem 0 1rem 0;
+  list-style: none;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .messageContent_bot .listItem {
+  position: relative;
+  margin: 0.55rem 0;
+  padding-left: 1.8rem;
+  line-height: 1.75;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .messageContent_bot .listItem::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-size: 1.5rem;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .messageContent_bot strong.bold {
+  color: #ffd700;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .messageContent_bot .heading {
+  color: #10b981;
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin: 1.4rem 0 0.8rem;
+}
+.gemini_reply .model .wrapper .aiContainer .answerContent .messageContent_bot .paragraph {
+  color: #e5e7eb;
+  line-height: 1.8;
+  margin: 0.7rem 0;
+}
+.gemini_reply .model .wrapper .sendIcon.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes translateIn {
+  from {
+    transform: translateY(-60rem) scale(0);
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    width: 100%;
+    height: 100%;
+  }
+}
+@keyframes translateOut {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-50rem) scale(0);
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}/*# sourceMappingURL=gemini_reply.module.css.map */

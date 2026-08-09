@@ -1,0 +1,41 @@
+.processing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+
+    .videoWrapper {
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 0 auto 1rem;
+        box-shadow: 0 0 60px rgba(59, 130, 246, 0.5);
+        border: 6px solid rgba(59, 130, 246, 0.3);
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    h2 {
+        font-size: 1.8rem;
+        color: #1a1a1a;
+        font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+        .videoWrapper {
+            width: 160px;
+            height: 160px;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+        }
+    }
+}

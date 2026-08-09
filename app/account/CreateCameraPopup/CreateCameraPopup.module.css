@@ -1,0 +1,165 @@
+@charset "UTF-8";
+/* CreateCameraPopup.module.scss */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup {
+  background-color: #fff;
+  border-radius: 20px;
+  width: 480px;
+  max-width: 100%;
+  max-height: 80vh;
+  /* QUAN TRỌNG: nếu nội dung quá dài -> scroll */
+  padding: 32px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  /* scroll bên trong */
+  overscroll-behavior: contain;
+  transform: scale(0.85);
+  animation: scaleUp 0.25s forwards;
+}
+.popup::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Title */
+.title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Group Title */
+.groupTitle {
+  margin-top: 5px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.label {
+  font-size: 1.4rem;
+  margin-bottom: -1rem;
+  font-weight: 400;
+}
+
+/* Input */
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+.input::-moz-placeholder {
+  font-size: 1.25rem;
+}
+.input::placeholder {
+  font-size: 1.25rem;
+}
+.input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Buttons */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cancel,
+.submit {
+  padding: 1rem 3rem;
+  border-radius: 10px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.cancel {
+  border: 1px solid #d1d5db;
+  background-color: #fff;
+  color: #374151;
+}
+.cancel:hover {
+  background-color: #f3f4f6;
+}
+
+.submit {
+  background-color: #6366f1;
+  border: none;
+  color: #fff;
+}
+.submit:hover {
+  background-color: #4f46e5;
+}
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+}
+@keyframes scaleUp {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* -------- RESPONSIVE -------- */
+@media (max-width: 480px) {
+  .popup {
+    padding: 24px;
+    border-radius: 18px;
+    width: 100%;
+  }
+  .title {
+    font-size: 1.35rem;
+  }
+  .input {
+    font-size: 0.95rem;
+    padding: 10px 12px;
+  }
+  .groupTitle {
+    font-size: 1.05rem;
+  }
+  .submit,
+  .cancel {
+    font-size: 1rem;
+    padding: 10px 16px;
+  }
+}/*# sourceMappingURL=CreateCameraPopup.module.css.map */

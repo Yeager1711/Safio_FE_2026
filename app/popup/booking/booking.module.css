@@ -1,0 +1,177 @@
+.booking__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: booking__fadeIn 0.3s ease-in;
+}
+.booking__overlay.booking__overlay--exit {
+  animation: booking__fadeOut 0.3s ease-out forwards;
+}
+
+.booking__popup {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 60rem;
+  position: relative;
+  box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);
+  animation: booking__slideIn 0.3s ease-out;
+}
+.booking__popup.booking__popup--exit {
+  animation: booking__slideOut 0.3s ease-in forwards;
+}
+
+.booking__title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.booking__description {
+  font-size: 1.4rem;
+  color: #666;
+  margin-bottom: 15px;
+  line-height: 1.7;
+}
+
+.booking__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.booking__formGroup {
+  margin-bottom: 1rem;
+}
+
+.booking__label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.booking__instruction {
+  font-size: 0.9rem;
+  color: #777;
+  margin: 0;
+}
+
+.booking__input,
+.booking__select {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1.3rem;
+  box-sizing: border-box;
+}
+.booking__input::-moz-placeholder, .booking__select::-moz-placeholder {
+  font-size: 1.1rem;
+}
+.booking__input::placeholder,
+.booking__select::placeholder {
+  font-size: 1.1rem;
+}
+.booking__input option,
+.booking__select option {
+  font-size: 1.1rem;
+}
+.booking__input:focus,
+.booking__select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.booking__select {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") no-repeat right 10px center;
+  background-size: 12px;
+}
+
+.booking__submitButton {
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+.booking__submitButton:hover {
+  background-color: #0056b3;
+}
+
+.booking__closeButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 4rem;
+  cursor: pointer;
+  color: #333;
+  transition: color 0.3s ease;
+}
+.booking__closeButton:hover {
+  color: #007bff;
+}
+
+.booking__note {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Animations */
+@keyframes booking__fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes booking__slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes booking__fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes booking__slideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+}/*# sourceMappingURL=booking.module.css.map */

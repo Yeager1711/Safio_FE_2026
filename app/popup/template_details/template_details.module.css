@@ -10,14 +10,15 @@
   z-index: 99999;
   opacity: 0;
   animation: slideIn 0.4s ease-out forwards;
-  -webkit-backdrop-filter: blur(10px);
-          backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   padding: 1.5rem;
   will-change: transform, opacity;
-  /* Popup content container */
 }
 .popupOverlay_pc.closing {
   animation: slideOut 0.4s ease-out forwards;
+}
+.popupOverlay_pc {
+  /* Popup content container */
 }
 .popupOverlay_pc .popupContent {
   background: #ffffff;
@@ -28,10 +29,12 @@
   max-width: 100rem;
   transform: translateY(30px);
   overflow: hidden;
-  /* Popup body with flex layout */
 }
 .popupOverlay_pc .popupContent.closing {
   animation: slideOut 0.4s ease-out forwards;
+}
+.popupOverlay_pc .popupContent {
+  /* Popup body with flex layout */
 }
 .popupOverlay_pc .popupContent .popupBody {
   display: flex;
@@ -82,10 +85,12 @@
   max-height: 70vh;
   overflow-y: auto;
   scrollbar-width: none;
-  /* Popup header */
 }
 .popupOverlay_pc .popupContent .popupBody .infoSection::-webkit-scrollbar {
   display: none;
+}
+.popupOverlay_pc .popupContent .popupBody .infoSection {
+  /* Popup header */
 }
 .popupOverlay_pc .popupContent .popupBody .infoSection .popupHeader {
   text-align: left;
@@ -295,8 +300,7 @@
   margin: auto;
   inset: 0;
   background: #fff;
-  -webkit-backdrop-filter: blur(0.5rem);
-          backdrop-filter: blur(0.5rem);
+  backdrop-filter: blur(0.5rem);
   z-index: 9999 !important;
   border: 0.1rem solid #dbdbdb;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
@@ -350,10 +354,12 @@
   padding: 1.5rem 0.8rem 0 2rem;
   overflow: scroll;
   will-change: height, opacity, transform;
-  /* Toggle đúng 2 trạng thái */
 }
 .popupOverlay__reponsive .content::-webkit-scrollbar {
   display: none;
+}
+.popupOverlay__reponsive .content {
+  /* Toggle đúng 2 trạng thái */
 }
 .popupOverlay__reponsive .content.expanded {
   animation: expandContent 0.6s ease forwards;

@@ -1,72 +1,97 @@
+@charset "UTF-8";
 .display-none {
   display: none;
 }
 
 .sidebar {
-  position: fixed;
+  position: relative;
   top: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  border-bottom: 0.1rem solid #dbdbdb;
+  background: transparent;
   z-index: 1000;
 }
 .sidebar .margin {
-  max-width: 120rem;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem 2rem;
+  max-width: 180rem;
+  width: 95%;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .sidebar .margin .logo {
   font-weight: bold;
-  font-size: 2rem;
+  font-size: 3rem;
   color: #333;
   display: flex;
   align-items: center;
   height: 5rem;
   width: 5rem;
   border-radius: 50%;
-  background: #ffedda;
 }
 .sidebar .margin .logo img {
-  transform: scale(0.85);
+  max-width: 15rem;
   width: 100%;
-  height: 100%;
   -o-object-fit: cover;
      object-fit: cover;
+}
+@media (max-width: 480px) {
+  .sidebar .margin .logo img {
+    max-width: 3rem;
+    display: block;
+  }
+}
+.sidebar .margin .logo strong {
+  color: #007bff;
+}
+@media (max-width: 480px) {
+  .sidebar .margin .logo {
+    font-size: 1.8rem;
+  }
 }
 .sidebar .margin .nav-container {
   display: flex;
   align-items: center;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.sidebar .margin .user-container {
+.sidebar .margin .nav-container.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+.sidebar .margin .user_1,
+.sidebar .margin .user_2 {
+  padding: 1rem;
+  background: #dbdbdb;
+  cursor: pointer;
+  border-radius: 5rem;
+}
+.sidebar .margin .user_1 svg,
+.sidebar .margin .user_2 svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.sidebar .margin .n-container {
   display: flex;
   align-items: center;
   gap: 1rem;
   position: relative;
-}
-.sidebar .margin .user-container .user_1,
-.sidebar .margin .user-container .user_2 {
-  padding: 1rem;
-  background: #dbdbdb;
+  background: #fff;
   border-radius: 5rem;
-  cursor: pointer;
-}
-.sidebar .margin .user-container .user_1 svg,
-.sidebar .margin .user-container .user_2 svg {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 .sidebar .margin .nav {
   display: flex;
   gap: 2rem;
   list-style: none;
   align-items: center;
+  padding: 0;
 }
 .sidebar .margin .nav li {
-  margin: 0 2rem;
+  margin: 0.5rem 1rem;
+}
+.sidebar .margin .nav li:last-child {
+  margin: 0 1rem 0 2rem;
 }
 .sidebar .margin .nav li a {
   text-decoration: none;
@@ -79,8 +104,11 @@
   color: #000;
 }
 .sidebar .margin .nav li.active a {
-  color: #000;
-  border-bottom: 2px solid #000;
+  color: #fff;
+  background: #007bff;
+  padding: 0.5rem 1rem;
+  border-radius: 5rem;
+  transition: 0.3s linear;
 }
 .sidebar .margin .nav li.nav-hidden {
   display: none;
@@ -101,6 +129,12 @@
   justify-content: center;
   width: 1.6rem;
   height: 3.6rem;
+  display: none;
+}
+@media (max-width: 480px) {
+  .sidebar .margin .chevron {
+    display: flex;
+  }
 }
 .sidebar .margin .chevron svg {
   width: 1rem;
@@ -119,7 +153,7 @@
     position: relative;
   }
   .sidebar .margin .nav li {
-    margin: 0 1.5rem;
+    margin: 0;
   }
   .sidebar .margin .nav li a {
     padding: 0.2rem;
@@ -140,7 +174,7 @@
     display: inline-block;
   }
   .sidebar .margin .chevron_expend-open {
-    width: 23.5rem;
+    width: 25rem;
   }
   .sidebar .margin .chevron {
     display: flex;
@@ -161,118 +195,134 @@
   }
 }
 .user-popup {
-  position: fixed;
-  top: 10%;
-  right: 1rem;
-  background: #fff;
-  border: 1px solid #dbdbdb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transform: translateX(-100%);
-  transition: transform 0.3s ease-in-out, right 0.3s ease-in-out;
-  z-index: 1001;
-  max-width: 30rem;
+  position: absolute;
+  top: 100%;
+  right: -110%;
   width: 100%;
+  max-width: 21.5rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 2.5rem;
+  overflow: hidden;
+  z-index: 100;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  backdrop-filter: blur(2.5rem) saturate(180%);
+  -webkit-backdrop-filter: blur(2.5rem) saturate(180%);
+  background: rgba(255, 255, 255, 0.8);
+  /* Liquid glass viền ánh sáng phản chiếu */
+  border: 1px solid rgb(255, 255, 255);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), inset 0 0 30px rgba(255, 255, 255, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.2);
+}
+.user-popup::before, .user-popup::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2rem;
+  pointer-events: none;
+  transition: 0.3s ease;
+}
+.user-popup::before {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent);
+  mix-blend-mode: screen;
+  opacity: 0.4;
+}
+.user-popup::after {
+  background: radial-gradient(circle at 70% 70%, rgba(0, 0, 0, 0.2), transparent);
+  mix-blend-mode: multiply;
+  opacity: 0.7;
 }
 .user-popup.popup-open {
   transform: translateX(0);
   right: 3%;
 }
+.user-popup {
+  /* ========= Bên trong ========= */
+}
 .user-popup .user-info {
-  margin-bottom: 1rem;
-  border-bottom: 0.1rem solid #dbdbdb;
   padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 .user-popup .user-info h3 {
-  font-size: 2rem;
-  padding-bottom: 0;
-  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  color: #333;
+  margin: 0.3rem 0 0.5rem 0;
 }
 .user-popup .user-info p {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #888;
+  font-size: 1.3rem;
+  color: #111;
 }
 .user-popup .user-info:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease;
   cursor: pointer;
-  border-radius: 1rem;
-  transition: 0.3s linear;
-  background: #f1f1f1;
+  border-radius: 1.5rem;
 }
 .user-popup .control {
-  border-bottom: 0.1rem solid #dbdbdb;
-  padding-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 .user-popup .control button {
   display: block;
-  padding: 1.5rem 1rem;
+  width: 100%;
+  padding: 2rem 1rem;
   font-size: 1.4rem;
-  text-decoration: none;
-  margin: 0.5rem 0;
+  color: #111;
   background: none;
   border: none;
-  cursor: pointer;
-  width: 100%;
   text-align: left;
+  border-radius: 1.5rem;
+  transition: background 0.3s ease;
 }
 .user-popup .control button:hover {
-  background: #f1f1f1;
-  border-radius: 0.7rem;
+  font-weight: 550;
+  background: rgba(0, 0, 0, 0.12);
+  transition: 0.3s linear;
 }
 .user-popup .logout-btn {
   margin-top: 1rem;
   padding: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: none;
+  gap: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
   border: none;
   cursor: pointer;
-  font-size: 1.5rem;
-  color: #d32f2f;
-  width: 100%;
+  color: #ff4b4b;
+  font-size: 1.4rem;
+  border-radius: 1.5rem;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 .user-popup .logout-btn svg {
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 1.8rem;
+  height: 1.8rem;
 }
 .user-popup .logout-btn:hover {
-  color: #b71c1c;
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff2f2f;
 }
-.user-popup .error {
-  font-size: 1.4rem;
-  color: #d32f2f;
-  padding: 1rem;
+.user-popup {
+  /* Liquid shimmer animation */
 }
-.user-popup .skeleton {
-  background: #e0e0e0;
-  border-radius: 0.5rem;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-.user-popup .skeleton_text {
-  width: 200px;
-  height: 2rem;
-  margin-bottom: 0.5rem;
-}
-.user-popup .skeleton_email {
-  width: 150px;
-  height: 1.2rem;
-}
-@keyframes pulse {
+@keyframes liquidMove {
   0% {
-    opacity: 1;
+    background-position: 0% 50%;
   }
   50% {
-    opacity: 0.5;
+    background-position: 100% 50%;
   }
   100% {
-    opacity: 1;
+    background-position: 0% 50%;
   }
 }
-@media (min-width: 1600px) {
-  .user-popup.popup-open {
-    transform: translateX(0);
-    right: 13% !important;
-  }
+.user-popup::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  animation: liquidMove 8s ease-in-out infinite;
+  background-size: 200% 200%;
+  pointer-events: none;
 }/*# sourceMappingURL=header.module.css.map */

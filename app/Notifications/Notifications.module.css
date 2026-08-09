@@ -37,7 +37,6 @@
 .notifications .wrapper_notifications {
   border-radius: 1rem;
   padding: 0 0 3rem 0;
-  /* Style cho pagination */
 }
 .notifications .wrapper_notifications .box {
   padding: 1.5rem 1rem;
@@ -102,6 +101,9 @@
   padding: 0.8rem 0;
   font-size: 1.2rem;
   color: rgba(102, 102, 102, 0.9);
+}
+.notifications .wrapper_notifications {
+  /* Style cho pagination */
 }
 .notifications .wrapper_notifications .swiper-pagination {
   position: absolute;

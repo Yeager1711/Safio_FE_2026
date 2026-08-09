@@ -1,662 +1,616 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import styles from './account_info.module.scss';
-import { useApi } from 'app/lib/apiContext/apiContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState, useRef } from 'react';
+import { useApi } from '../../lib/apiContext/apiContext';
+import styles from './account_info.module.css'; // hoặc infoTest.module.css tùy bạn đặt tên
+import CreateCameraPopup from '../CreateCameraPopup/CreateCameraPopup';
+import RelativeSearchNav from '../RelativeSearchNav/RelativeSearchNav';
+import RequiredRelationshipList from '../RequiredRelationshipList/RequiredRelationshipList';
+
+import {
+    faArrowRight,
+    faCamera,
+    faCheck,
+    faChevronRight,
+    faCircleCheck,
+    faFingerprint,
+    faLock,
+    faShieldHalved,
+    faUser,
+    faUsers,
+    faVideo,
+    faWaveSquare,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQrcode, faCopy } from '@fortawesome/free-solid-svg-icons';
-import QRPopupCreated from '../../popup/QR_created/QR_created';
-import UserFeedback from 'app/feedback/userFeedback/userFeedBack';
+import { FiSearch, FiCopy, FiMapPin, FiMenu } from 'react-icons/fi';
+import SecurityControls from './SecurityControls/SecurityControls';
+import { useRouter } from 'next/navigation';
+
+type AcceptanceStatus = 'accepted' | 'pending' | 'denied';
+
+interface Relative {
+    _id?: string;
+    user_id: string;
+    full_name: string;
+    acceptance_status: AcceptanceStatus;
+    relationship?: string;
+}
+
+interface Camera {
+    _id: string;
+    cam_name: string;
+    location: string;
+    status: string;
+}
+
+interface Alert {
+    log_id: string;
+    created: string;
+    action?: string;
+    warning?: {
+        level?: string;
+    };
+}
 
 interface UserProfile {
-    user_id: number;
-    full_name: string;
-    email: string;
-    phone: string | null;
-    address: string | null;
-    created_at: Date;
-    role: {
-        role_id: number;
-        name: string;
+    user: {
+        user_id: string;
+        full_name: string;
+        age?: number;
+        phone_number?: string;
     };
+    relatives?: Relative[];
+    cameras?: Camera[];
+    activity_logs?: Alert[];
 }
 
-interface Guest {
-    guest_id: number;
-    invitation_id: number;
-    full_name: string;
-    card_id: number;
-}
-
-interface Template {
-    card_id: number;
-    template: {
-        template_id: number;
-        name: string;
-        image_url: string;
-        price: string;
-        payments: {
-            amount: string;
-            payment_date: string;
-            status: string;
-            payment_method: string;
-        }[];
-        guests: Guest[];
-    };
-}
-
-interface QrResponse {
-    qrId: number;
-    bank: string;
-    accountNumber: string;
-    accountHolder: string;
-    qrCodeUrl: string;
-    createdAt: string;
-    status: string;
-    representative: string;
-}
-
-interface Bank {
-    id: string;
-    name: string;
-    logo?: string;
-    bin?: string;
-    shortName?: string;
-    code?: string;
-}
-
-interface DiscountEligibilityResponse {
-    isEligible: boolean;
-    message?: string;
-}
-
-function AccountInfo() {
-    const { getUserProfile, getUserTemplates, accessToken, updateUserName, getUserQr, checkDiscountEligibility } =
-        useApi();
-    const [user, setUser] = useState<UserProfile | null>(null);
-    const [error, setError] = useState<string>('');
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [editedFullName, setEditedFullName] = useState<string>('');
-    const [templates, setTemplates] = useState<Template[]>([]);
-    const [showGuestsModal, setShowGuestsModal] = useState<boolean>(false);
-    const [selectedGuests, setSelectedGuests] = useState<{
-        guests: Guest[];
-        templateName: string;
-        template_id: number;
-        price: string;
-        paymentAmount?: string;
-        paymentDate?: string;
-    } | null>(null);
-    const [showQrPopup, setShowQrPopup] = useState<boolean>(false);
-    const [qrData, setQrData] = useState<QrResponse[] | null>(null);
-    const [banks, setBanks] = useState<Bank[]>([]);
-    const [showFeedback, setShowFeedback] = useState<boolean>(false);
-    const [templateId, setTemplateId] = useState<number | null>(null);
-
+export default function NyafAccountInfo() {
+    const { getUserProfile } = useApi();
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isCreateCamOpen, setIsCreateCamOpen] = useState(false);
+    const [isRelativeSearchOpen, setIsRelativeSearchOpen] = useState(false);
+    const [isRequireListOpen, setIsRequireListOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    const [isEligibleForDiscount, setIsEligibleForDiscount] = useState<boolean>(false);
-    const [discountEndDate, setDiscountEndDate] = useState<Date | null>(null);
-    const [timeLeft, setTimeLeft] = useState<string>('');
+    const [currentFilter, setCurrentFilter] = useState<'family' | 'denied'>('family');
+    const [securityEnabled, setSecurityEnabled] = useState(true);
+    const [activeCamera, setActiveCamera] = useState<string | null>(null);
+
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!accessToken) {
-            router.push('/');
-            return;
-        }
-
-        const fetchData = async (): Promise<void> => {
-            setIsLoading(true);
-            try {
-                const [userData, templateData, bankData] = await Promise.all([
-                    getUserProfile(),
-                    getUserTemplates(),
-                    fetch('https://api.vietqr.io/v1/banks').then((res) => res.json()),
-                ]);
-                setUser(userData);
-                setEditedFullName(userData.full_name);
-                setError('');
-                const formattedTemplates: Template[] = templateData.map((item: Template) => ({
-                    card_id: item.card_id,
-                    template: {
-                        template_id: item.template.template_id,
-                        name: item.template.name,
-                        image_url: item.template.image_url,
-                        price: item.template.price,
-                        payments: item.template.payments,
-                        guests: item.template.guests,
-                    },
-                }));
-                const uniqueTemplates: Template[] = formattedTemplates.reduce((acc: Template[], current: Template) => {
-                    const existing = acc.find((item) => item.template.template_id === current.template.template_id);
-                    if (!existing) {
-                        acc.push(current);
-                    }
-                    return acc;
-                }, []);
-
-                // Sắp xếp templates theo ngày thanh toán (mới nhất đến cũ nhất)
-                uniqueTemplates.sort((a, b) => {
-                    const dateA = a.template.payments[0]?.payment_date
-                        ? new Date(a.template.payments[0].payment_date).getTime()
-                        : 0;
-                    const dateB = b.template.payments[0]?.payment_date
-                        ? new Date(b.template.payments[0].payment_date).getTime()
-                        : 0;
-                    // Nếu không có ngày thanh toán, đẩy xuống cuối
-                    if (!dateA && !dateB) return 0;
-                    if (!dateA) return 1;
-                    if (!dateB) return -1;
-                    return dateB - dateA; // Sắp xếp giảm dần (mới nhất trước)
-                });
-
-                setTemplates(uniqueTemplates);
-                if (bankData.code === '00' && Array.isArray(bankData.data)) {
-                    setBanks(bankData.data);
-                } else {
-                    console.warn('Bank API returned invalid data:', bankData);
-                }
-                setError('');
-
-                const discountResponse: DiscountEligibilityResponse = await checkDiscountEligibility();
-                console.log('Discount Response:', discountResponse);
-                setIsEligibleForDiscount(discountResponse.isEligible);
-                if (discountResponse.isEligible && userData.created_at) {
-                    const eligibilityEndDate = new Date(userData.created_at);
-                    eligibilityEndDate.setDate(eligibilityEndDate.getDate() + 7);
-                    const now = new Date(); // Current date: July 09, 2025, 10:56 AM +07
-                    if (eligibilityEndDate > now) {
-                        setDiscountEndDate(eligibilityEndDate);
-                    } else {
-                        setIsEligibleForDiscount(false);
-                    }
-                }
-            } catch (err: unknown) {
-                let errorMessage = 'Không thể lấy dữ liệu';
-                if (err instanceof Error) errorMessage = err.message;
-                else if (typeof err === 'object' && err !== null && 'message' in err)
-                    errorMessage = (err as { message: string }).message;
-                setError(errorMessage);
-                console.error('Fetch error:', errorMessage);
-            } finally {
-                setIsLoading(false);
+        const handleClickOutside = (e: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+                setUserMenuOpen(false);
             }
         };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-        fetchData();
-    }, [accessToken, getUserProfile, getUserTemplates, router, checkDiscountEligibility]);
+    const normalizeProfile = (data: any): UserProfile => {
+        const rawUser = data.user ?? {};
+        const fullName = typeof rawUser.full_name === 'string' ? rawUser.full_name.trim().replace(/\s+/g, ' ') : '';
 
-    useEffect(() => {
-        const templateIdFromQuery: string | null = searchParams.get('templateId');
-        const feedbackFromQuery: string | null = searchParams.get('feedback');
-        if (templateIdFromQuery && feedbackFromQuery === 'true') {
-            setTemplateId(Number(templateIdFromQuery));
-            setShowFeedback(true);
-        }
-    }, [searchParams]);
+        return {
+            user: {
+                user_id: typeof rawUser.user_id === 'string' ? rawUser.user_id : (rawUser.user_id?._id ?? ''),
+                full_name: fullName,
+                age: rawUser.age,
+                phone_number: rawUser.phone_number,
+            },
+            relatives: data.relatives ?? [],
+            cameras: data.cameras ?? [],
+            activity_logs: data.activity_logs ?? [],
+        };
+    };
 
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if (discountEndDate && isEligibleForDiscount) {
-            const calculateTimeLeft = (): void => {
-                const now = new Date();
-                const difference = discountEndDate.getTime() - now.getTime();
-
-                if (difference <= 0) {
-                    setIsEligibleForDiscount(false);
-                    setTimeLeft('Hết hạn');
-                    return;
-                }
-
-                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-                setTimeLeft(`${days}D, ${hours}H, ${minutes}M, ${seconds}S`);
-            };
-
-            calculateTimeLeft();
-            timer = setInterval(calculateTimeLeft, 1000);
-
-            return () => clearInterval(timer);
-        }
-    }, [discountEndDate, isEligibleForDiscount]);
-
-    const handleEdit = (): void => setIsEditing(true);
-    const handleSave = async (): Promise<void> => {
+    const loadProfile = async () => {
         try {
-            const updatedUser = await updateUserName(editedFullName);
-            setUser(updatedUser);
-            setIsEditing(false);
-        } catch (err: unknown) {
-            let errorMessage = 'Không thể cập nhật tên';
-            if (err instanceof Error) errorMessage = err.message;
-            else if (typeof err === 'object' && err !== null && 'message' in err)
-                errorMessage = (err as { message: string }).message;
-            setError(errorMessage);
-        }
-    };
+            const data = await getUserProfile();
+            const normalized = normalizeProfile(data);
+            setProfile(normalized);
 
-    const handleShowGuests = (
-        guests: Guest[],
-        templateName: string,
-        template_id: number,
-        price: string,
-        paymentAmount?: string,
-        paymentDate?: string
-    ): void => {
-        setSelectedGuests({ guests, templateName, template_id, price, paymentAmount, paymentDate });
-        setShowGuestsModal(true);
-    };
-
-    const handleCloseGuestsModal = (): void => {
-        setShowGuestsModal(false);
-        setSelectedGuests(null);
-    };
-
-    const handleShowQrPopup = async (): Promise<void> => {
-        try {
-            const qrList = await getUserQr();
-            if (qrList.length > 0) {
-                const convertedQrList: QrResponse[] = qrList.map((qr) => ({
-                    ...qr,
-                    createdAt: qr.createdAt instanceof Date ? qr.createdAt.toISOString() : qr.createdAt,
-                }));
-                setQrData(convertedQrList);
-                setShowQrPopup(true);
-            } else {
-                throw new Error('Bạn chưa tạo mã QR');
+            // Set camera active mặc định
+            if (normalized.cameras && normalized.cameras.length > 0) {
+                setActiveCamera(normalized.cameras[0]._id);
             }
-        } catch (err: unknown) {
-            let errorMessage = 'Bạn chưa tạo thẻ, hoặc lỗi không thể lấy mã QR';
-            if (err instanceof Error) errorMessage = err.message;
-            else if (typeof err === 'object' && err !== null && 'message' in err)
-                errorMessage = (err as { message: string }).message;
-            setError(errorMessage);
+        } catch (error) {
+            console.error('Lỗi tải profile:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleCloseQrPopup = (): void => {
-        setShowQrPopup(false);
-        setQrData(null);
-    };
+    useEffect(() => {
+        loadProfile();
+    }, []);
 
-    const exportGuestLinks = (): void => {
-        if (!selectedGuests || !selectedGuests.guests.length) {
-            setError('Không có khách mời để xuất file.');
-            return;
+    const copyUserId = async () => {
+        if (!profile?.user?.user_id) return;
+        try {
+            await navigator.clipboard.writeText(profile.user.user_id);
+            alert('Copy ID thành công!');
+        } catch {
+            alert('Copy thất bại!');
         }
-
-        const baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || '';
-        const links: string = selectedGuests.guests
-            .map(
-                (guest) =>
-                    `${guest.full_name}: ${baseUrl}template/${selectedGuests.template_id}/${guest.guest_id}/${guest.invitation_id}/${guest.card_id}`
-            )
-            .join('\n');
-
-        const blob = new Blob([links], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `guest_links_${selectedGuests.template_id}.txt`;
-        a.click();
-        window.URL.revokeObjectURL(url);
     };
 
-    const copyToClipboard = (text: string): void => {
-        navigator.clipboard
-            .writeText(text)
-            .then(() => {
-                alert('Đường link đã được sao chép!');
-            })
-            .catch((err) => {
-                console.error('Lỗi khi sao chép: ', err);
-                alert('Không thể sao chép đường link.');
-            });
+    const maskUserId = (id: string) => {
+        if (!id || id.length < 16) return id;
+        return `${id.slice(0, 8)}....xxxx....${id.slice(-12)}`;
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    };
+
+    const getInitials = (fullName: string) => {
+        if (!fullName) return '?';
+        const parts = fullName.trim().split(' ').filter(Boolean);
+        return parts.length === 1
+            ? parts[0][0].toUpperCase()
+            : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    };
+
+    if (loading) {
+        return (
+            <div className={styles.loading}>
+                <div className={styles.spinner} />
+                <p>Đang kết nối hệ thống...</p>
+            </div>
+        );
+    }
+
+    if (!profile) {
+        return <div className={styles.error}>Không thể tải dữ liệu</div>;
+    }
+
+    const user = profile.user;
+    const relatives = profile.relatives || [];
+    const cameras = profile.cameras || [];
+    const alerts = profile.activity_logs || [];
+
+    const pendingCount = relatives.filter((r) => r.acceptance_status === 'pending').length;
+    const trustedCount = relatives.filter((r) => r.acceptance_status === 'accepted').length;
+    const onlineCameras = cameras.filter(
+        (c) => c.status === 'Hoạt động' || c.status?.toLowerCase() === 'online'
+    ).length;
+    const alertCount = alerts.length;
+
+    const normalizedFullName = user.full_name.trim().replace(/\s+/g, ' ');
+    const firstName = normalizedFullName.split(' ')[0] || 'User';
+
+    const filteredRelatives = relatives.filter((r) => {
+        if (currentFilter === 'family') {
+            return r.acceptance_status === 'accepted' || r.acceptance_status === 'pending';
+        }
+        return r.acceptance_status === 'denied';
+    });
+
+    const handleAddFace = () => {
+        router.push('/Scan/face-scan');
     };
 
     return (
-        <div className={styles.account_info}>
-            <div className={styles.wrapper}>
-                <div className={styles.header_infoAccount}>
-                    <div className={styles.wrapper_left}>
-                        <div className={styles.account_info__wrapper}>
-                            <h3>
-                                Chào mừng bạn đến với <strong>Minto</strong>
-                            </h3>
-                            {error ? (
-                                <p className={styles.error}>Lỗi: {error}</p>
-                            ) : isLoading ? (
-                                <div className={styles.skeleton_wrapper}>
-                                    <div className={styles.box_item}>
-                                        <div className={styles.box_flex}>
-                                            <h2>Họ và tên</h2>
-                                            <div className={`${styles.skeleton} ${styles.skeleton_text}`}></div>
-                                        </div>
-                                        <div className={styles.box_right}>
-                                            <div className={`${styles.skeleton} ${styles.skeleton_button}`}></div>
-                                        </div>
-                                    </div>
-                                    <div className={styles.box_item}>
-                                        <div className={styles.box_flex}>
-                                            <h2>Địa chỉ Email</h2>
-                                            <div className={`${styles.skeleton} ${styles.skeleton_text}`}></div>
-                                        </div>
-                                        <div className={styles.box_right}></div>
-                                    </div>
-                                    <div className={styles.box_item}>
-                                        <div className={styles.box_flex}>
-                                            <h2>Ngày tạo</h2>
-                                            <div className={`${styles.skeleton} ${styles.skeleton_text}`}></div>
-                                        </div>
-                                        <div className={styles.box_right}></div>
-                                    </div>
-                                </div>
-                            ) : user ? (
-                                <>
-                                    <div className={styles.box_item}>
-                                        <div className={styles.box_flex}>
-                                            {isEditing ? (
-                                                <input
-                                                    type="text"
-                                                    value={editedFullName}
-                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                                        setEditedFullName(e.target.value)
-                                                    }
-                                                    className={styles.input}
-                                                />
-                                            ) : (
-                                                <h2>{user.full_name || 'Chưa cập nhật'}</h2>
-                                            )}
-                                        </div>
-                                        <div className={styles.box_right}>
-                                            {isEditing ? (
-                                                <button onClick={handleSave}>Lưu</button>
-                                            ) : (
-                                                <button onClick={handleEdit}>Chỉnh sửa</button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className={styles.box_item}>
-                                        <div className={styles.box_flex}>
-                                            <span>
-                                                {' '}
-                                                <strong>Email: </strong> {user.email || 'Chưa cập nhật'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className={styles.box_item}>
-                                        <div className={styles.box_flex}>
-                                            <span>
-                                                <strong>Ngày tạo:</strong>{' '}
-                                                {user.created_at
-                                                    ? new Date(user.created_at).toLocaleDateString('vi-VN', {
-                                                          day: '2-digit',
-                                                          month: '2-digit',
-                                                          year: 'numeric',
-                                                      })
-                                                    : 'Chưa cập nhật'}
-                                            </span>
-                                        </div>
-                                    </div>
+        <>
+            <main className={styles.page}>
+                {/* Ambient background */}
+                <div className={styles.ambientOne} />
+                <div className={styles.ambientTwo} />
 
-                                    <div className={styles.isEligibleForDiscount}>
-                                        <div className={styles.box_flex}>
-                                            <h4>Ưu đãi khi lần đầu sử dụng: </h4>
-                                            {isEligibleForDiscount && discountEndDate ? (
-                                                <div className={styles.wrapper_countDown_discount}>
-                                                    <span>{timeLeft}</span>
-                                                </div>
-                                            ) : null}
-                                        </div>
+                {/* HEADER */}
+                <header className={styles.header}>
+                    <div className={styles.headerLeft}>
+                        <button
+                            className={styles.menuToggle}
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            type="button"
+                        >
+                            <FiMenu size={20} />
+                        </button>
+
+                        <div className={styles.brandIcon}>
+                            <FontAwesomeIcon icon={faFingerprint} />
+                        </div>
+
+                        <div>
+                            <div className={styles.brandName}>Face ID</div>
+                            <div className={styles.brandSubtitle}>Security Center</div>
+                        </div>
+                    </div>
+
+                    <div className={styles.headerRight}>
+                        {/* Search bar → mở RelativeSearchNav */}
+                        <div className={styles.searchBar} onClick={() => setIsRelativeSearchOpen(true)}>
+                            <FiSearch size={16} />
+                            <span>Tìm kiếm người thân...</span>
+                        </div>
+
+                        <div className={styles.liveStatus}>
+                            <span className={styles.liveDot} />
+                            <span>System Online</span>
+                        </div>
+
+                        {/* Profile + menu */}
+                        <div className={styles.userMenuWrapper} ref={userMenuRef}>
+                            <button
+                                className={styles.profileButton}
+                                type="button"
+                                onClick={() => setUserMenuOpen((prev) => !prev)}
+                            >
+                                <span className={styles.profileAvatar}>{getInitials(user.full_name)}</span>
+                                <span className={styles.profileName}>{firstName}</span>
+                                <FontAwesomeIcon icon={faChevronRight} />
+                            </button>
+
+                            {userMenuOpen && (
+                                <div className={styles.userDropdown}>
+                                    <div className={styles.dropdownHeader}>
+                                        <strong>{normalizedFullName}</strong>
+                                        <span>
+                                            {user.age ?? '?'} tuổi • {user.phone_number || 'Chưa cập nhật'}
+                                        </span>
                                     </div>
-                                </>
-                            ) : (
-                                <p>Không có dữ liệu người dùng.</p>
-                            )}
-                        </div>
-                    </div>
-                    <div className={styles.right}>
-                        <div className={styles.wrapper__right_template}>
-                            <FontAwesomeIcon className={styles.icon_QR} icon={faQrcode} onClick={handleShowQrPopup} />
-                            <h4>Mẫu template đã sử dụng</h4>
-                            {isLoading ? (
-                                <div className={styles.grid_template}>
-                                    {Array.from({ length: 3 }).map((_, index) => (
-                                        <div key={index} className={styles.template_item}>
-                                            <div className={`${styles.skeleton} ${styles.skeleton_image}`}></div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : templates.length === 0 ? (
-                                <p>Chưa có template nào được sử dụng.</p>
-                            ) : (
-                                <div className={styles.grid_template}>
-                                    {templates.map((template) => (
-                                        <div key={template.card_id} className={styles.template_item}>
-                                            <div className={styles.image}>
-                                                <img
-                                                    src={template.template.image_url}
-                                                    alt={template.template.name}
-                                                    onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
-                                                        (e.currentTarget.src = '/placeholder.png')
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <button
+                                        className={styles.copyBtn}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            copyUserId();
+                                        }}
+                                    >
+                                        <FiCopy /> #{maskUserId(user.user_id)}
+                                    </button>
+                                    <button
+                                        className={styles.logoutBtn}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleLogout();
+                                        }}
+                                    >
+                                        Đăng xuất
+                                    </button>
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
-                <div className={styles.list_orders}>
-                    <h4>Đơn hàng và hóa đơn</h4>
-                    <div className={styles.list_item}>
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Tên template</th>
-                                    <th>Giá template</th>
-                                    <th>Giá thanh toán</th>
-                                    <th>Ngày thanh toán</th>
-                                    <th>Trạng thái</th>
-                                    <th>Danh sách khách mời</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {isLoading ? (
-                                    Array.from({ length: 3 }).map((_, rowIndex) => (
-                                        <tr key={rowIndex}>
-                                            {Array.from({ length: 6 }).map((_, cellIndex) => (
-                                                <td key={cellIndex}>
-                                                    <div className={`${styles.skeleton} ${styles.skeleton_cell}`}></div>
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))
-                                ) : templates.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6}>Chưa có đơn hàng nào.</td>
-                                    </tr>
+                </header>
+
+                {/* CONTENT */}
+                <section className={styles.content}>
+                    {/* HERO */}
+                    <section className={styles.hero}>
+                        <div className={styles.heroContent}>
+                            <div className={styles.heroBadge}>
+                                <span className={styles.heroBadgeDot} />
+                                FACE RECOGNITION ACTIVE
+                            </div>
+
+                            <h1>
+                                Your identity,
+                                <br />
+                                <span>protected by intelligence.</span>
+                            </h1>
+
+                            <p>
+                                Face ID continuously monitors your security environment and protects access to your
+                                personal space.
+                            </p>
+
+                            <div className={styles.heroActions}>
+                                <button type="button" className={styles.primaryButton} onClick={handleAddFace}>
+                                    <FontAwesomeIcon icon={faFingerprint} />
+                                    <span>Verify identity</span>
+                                    <FontAwesomeIcon className={styles.buttonArrow} icon={faArrowRight} />
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={styles.secondaryButton}
+                                    onClick={() => setIsRequireListOpen(true)}
+                                >
+                                    Yêu cầu kết nối
+                                    {pendingCount > 0 && <span className={styles.pendingBadge}>{pendingCount}</span>}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* FACE SCANNER (giữ nguyên visual) */}
+                        <div className={styles.faceScanner}>
+                            <div className={styles.scannerGlow} />
+                            <div className={styles.scannerFrame}>
+                                <div className={styles.cornerTopLeft} />
+                                <div className={styles.cornerTopRight} />
+                                <div className={styles.cornerBottomLeft} />
+                                <div className={styles.cornerBottomRight} />
+
+                                <div className={styles.faceOutline}>
+                                    <div className={styles.faceLine} />
+                                </div>
+
+                                <div className={styles.scanLine} />
+
+                                <div className={styles.scanData}>
+                                    <span>FACE ID</span>
+                                    <strong>READY</strong>
+                                </div>
+                            </div>
+
+                            <div className={styles.scannerStatus}>
+                                <span className={styles.statusIcon}>
+                                    <FontAwesomeIcon icon={faCheck} />
+                                </span>
+                                <div>
+                                    <strong>Identity protection active</strong>
+                                    <span>Last verification 2 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* STATS – tính từ dữ liệu thật */}
+                    <div className={styles.statsGrid}>
+                        <article className={styles.statCard}>
+                            <div className={styles.statTop}>
+                                <div className={styles.statIcon}>
+                                    <FontAwesomeIcon icon={faShieldHalved} />
+                                </div>
+                                <span className={styles.statLive}>Đã bảo vệ</span>
+                            </div>
+                            <div className={styles.statValue}>99.8%</div>
+                            <div className={styles.statLabel}>Độ tin cậy bảo mật</div>
+                            <div className={styles.statProgress}>
+                                <span style={{ width: '99.8%' }} />
+                            </div>
+                        </article>
+
+                        <article className={styles.statCard}>
+                            <div className={styles.statTop}>
+                                <div className={styles.statIcon}>
+                                    <FontAwesomeIcon icon={faCamera} />
+                                </div>
+                                <span className={styles.statLive}>
+                                    {onlineCameras > 0 ? 'Đang hoạt động' : 'Ngoại tuyến'}
+                                </span>
+                            </div>
+                            <div className={styles.statValue}>{String(cameras.length).padStart(2, '0')}</div>
+                            <div className={styles.statLabel}>Camera đang hoạt động</div>
+                            <div className={styles.statMini}>
+                                <span />
+                                {onlineCameras} / {cameras.length} hệ thống đang vận hành
+                            </div>
+                        </article>
+
+                        <article className={styles.statCard}>
+                            <div className={styles.statTop}>
+                                <div className={styles.statIcon}>
+                                    <FontAwesomeIcon icon={faUsers} />
+                                </div>
+                                <span className={styles.statLive}>Đáng tin cậy</span>
+                            </div>
+                            <div className={styles.statValue}>{String(trustedCount).padStart(2, '0')}</div>
+                            <div className={styles.statLabel}>Danh tính tin cậy</div>
+                            <div className={styles.statMini}>
+                                <FontAwesomeIcon icon={faCircleCheck} />
+                                {pendingCount > 0
+                                    ? `${pendingCount} yêu cầu đang chờ xác nhận`
+                                    : 'Không có truy cập trái phép'}
+                            </div>
+                        </article>
+
+                        <article className={styles.statCard}>
+                            <div className={styles.statTop}>
+                                <div className={styles.statIcon}>
+                                    <FontAwesomeIcon icon={faWaveSquare} />
+                                </div>
+                                <span className={styles.statLive}>{alertCount === 0 ? 'Ổn định' : 'Cần chú ý'}</span>
+                            </div>
+                            <div className={styles.statValue}>{alertCount}</div>
+                            <div className={styles.statLabel}>Cảnh báo an ninh</div>
+                            <div className={styles.statMini}>
+                                {alertCount === 0
+                                    ? 'Mọi thứ đang hoạt động bình thường'
+                                    : 'Xem nhật ký cảnh báo bên dưới'}
+                            </div>
+                        </article>
+                    </div>
+
+                    {/* LOWER GRID */}
+                    <div className={styles.dashboardGrid}>
+                        {/* SECURITY CONTROLS */}
+                        <SecurityControls
+                            securityEnabled={securityEnabled}
+                            onToggleSecurity={setSecurityEnabled}
+                            pendingCount={pendingCount}
+                            onManageClick={() => setIsRequireListOpen(true)}
+                        />
+
+                        {/* CAMERA NETWORK */}
+                        <article className={styles.panel}>
+                            <div className={styles.panelHeader}>
+                                <div>
+                                    <span className={styles.panelEyebrow}>MONITORING</span>
+                                    <h2>Camera network</h2>
+                                </div>
+                                <button
+                                    type="button"
+                                    className={styles.addCamera}
+                                    onClick={() => setIsCreateCamOpen(true)}
+                                >
+                                    +
+                                </button>
+                            </div>
+
+                            <div className={styles.cameraList}>
+                                {cameras.length === 0 ? (
+                                    <div className={styles.emptyState}>Chưa có camera nào</div>
                                 ) : (
-                                    templates.map((template) => (
-                                        <tr key={template.card_id}>
-                                            <td data-label="Tên template">{template.template.name}</td>
-                                            <td data-label="Giá">
-                                                {parseFloat(template.template.price).toLocaleString('vi-VN')} VNĐ
-                                            </td>
-                                            <td data-label="Số tiền thanh toán">
-                                                {template.template.payments[0]?.amount
-                                                    ? `${parseFloat(template.template.payments[0].amount).toLocaleString('vi-VN')} VNĐ`
-                                                    : 'Chưa có'}
-                                            </td>
-                                            <td data-label="Ngày thanh toán">
-                                                {template.template.payments[0]?.payment_date
-                                                    ? new Date(
-                                                          template.template.payments[0].payment_date
-                                                      ).toLocaleDateString('vi-VN')
-                                                    : 'Chưa có'}
-                                            </td>
-                                            <td data-label="Trạng thái">
-                                                {template.template.payments[0]?.status === 'COMPLETED'
-                                                    ? 'Hoàn tất'
-                                                    : template.template.payments[0]?.status || 'Chưa thanh toán'}
-                                            </td>
-                                            <td data-label="Danh sách khách mời">
-                                                <button
-                                                    style={{
-                                                        padding: '0.8rem 1.5rem',
-                                                        background: '#007bff',
-                                                        color: '#fff',
-                                                        borderRadius: '0.5rem',
-                                                    }}
-                                                    onClick={() =>
-                                                        handleShowGuests(
-                                                            template.template.guests,
-                                                            template.template.name,
-                                                            template.template.template_id,
-                                                            template.template.price,
-                                                            template.template.payments[0]?.amount,
-                                                            template.template.payments[0]?.payment_date
-                                                        )
-                                                    }
-                                                    disabled={template.template.guests.length === 0}
-                                                >
-                                                    {template.template.guests.length > 0
-                                                        ? 'Danh sách'
-                                                        : 'Chưa có khách mời'}
-                                                </button>
-                                            </td>
-                                        </tr>
+                                    cameras.map((c) => (
+                                        <button
+                                            key={c._id}
+                                            type="button"
+                                            className={`${styles.cameraItem} ${
+                                                activeCamera === c._id ? styles.cameraItemActive : ''
+                                            }`}
+                                            onClick={() => setActiveCamera(c._id)}
+                                        >
+                                            <div className={styles.cameraPreview}>
+                                                <FontAwesomeIcon icon={faVideo} />
+                                                {(c.status === 'Hoạt động' || c.status?.toLowerCase() === 'online') && (
+                                                    <span className={styles.cameraPulse} />
+                                                )}
+                                            </div>
+
+                                            <div className={styles.cameraInfo}>
+                                                <strong>{c.cam_name}</strong>
+                                                <span>
+                                                    <FiMapPin size={10} style={{ marginRight: 4 }} />
+                                                    {c.location}
+                                                </span>
+                                            </div>
+
+                                            <span
+                                                className={`${styles.cameraOnline} ${
+                                                    c.status === 'Hoạt động' || c.status?.toLowerCase() === 'online'
+                                                        ? ''
+                                                        : styles.cameraOffline
+                                                }`}
+                                            >
+                                                {c.status}
+                                            </span>
+                                        </button>
                                     ))
                                 )}
-                            </tbody>
-                        </table>
+                            </div>
+                        </article>
+
+                        {/* RELATIVES + ACTIVITY (span full) */}
+                        <article className={styles.activityPanel}>
+                            <div className={styles.panelHeader}>
+                                <div>
+                                    <span className={styles.panelEyebrow}>FAMILY & ACTIVITY</span>
+                                    <h2>Người thân & Timeline</h2>
+                                </div>
+
+                                <div className={styles.panelActions}>
+                                    <div className={styles.filterTabs}>
+                                        <button
+                                            className={`${styles.filterTab} ${
+                                                currentFilter === 'family' ? styles.filterActive : ''
+                                            }`}
+                                            onClick={() => setCurrentFilter('family')}
+                                        >
+                                            Gia đình
+                                        </button>
+                                        <button
+                                            className={`${styles.filterTab} ${
+                                                currentFilter === 'denied' ? styles.filterActive : ''
+                                            }`}
+                                            onClick={() => setCurrentFilter('denied')}
+                                        >
+                                            Đã từ chối
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className={styles.viewAll}
+                                        onClick={() => setIsRequireListOpen(true)}
+                                    >
+                                        Xem yêu cầu
+                                        {pendingCount > 0 && (
+                                            <span className={styles.pendingBadge}>{pendingCount}</span>
+                                        )}
+                                        <FontAwesomeIcon icon={faChevronRight} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Relatives list */}
+                            <div className={styles.relativesRow}>
+                                {filteredRelatives.length === 0 ? (
+                                    <div className={styles.emptyState}>Chưa có kết nối nào</div>
+                                ) : (
+                                    filteredRelatives.map((r) => (
+                                        <div key={r.user_id || r._id} className={styles.relativeCard}>
+                                            <div className={styles.relativeAvatar}>{getInitials(r.full_name)}</div>
+                                            <div className={styles.relativeInfo}>
+                                                <strong>{r.full_name}</strong>
+                                                <span
+                                                    className={`${styles.badge} ${
+                                                        r.acceptance_status === 'accepted'
+                                                            ? styles.connected
+                                                            : r.acceptance_status === 'denied'
+                                                              ? styles.denied
+                                                              : styles.pending
+                                                    }`}
+                                                >
+                                                    {r.acceptance_status === 'accepted'
+                                                        ? 'Đã kết nối'
+                                                        : r.acceptance_status === 'denied'
+                                                          ? 'Đã từ chối'
+                                                          : 'Đang chờ xác nhận'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className={styles.divider} style={{ margin: '20px 0' }} />
+
+                            {/* Timeline */}
+                            <div className={styles.timeline}>
+                                {alerts.length === 0 ? (
+                                    <div className={styles.emptyState}>Chưa có hoạt động gần đây</div>
+                                ) : (
+                                    alerts.slice(0, 6).map((a) => (
+                                        <div key={a.log_id} className={styles.timelineItem}>
+                                            <div
+                                                className={`${styles.timelineIcon} ${
+                                                    a.warning?.level?.toLowerCase() === 'high' ||
+                                                    a.warning?.level?.toLowerCase() === 'critical'
+                                                        ? ''
+                                                        : styles.success
+                                                }`}
+                                            >
+                                                <FontAwesomeIcon icon={a.warning?.level ? faWaveSquare : faCheck} />
+                                            </div>
+
+                                            <div className={styles.timelineContent}>
+                                                <strong>{a.action || 'Sự kiện'}</strong>
+                                                <span>
+                                                    {a.warning?.level
+                                                        ? `Mức độ: ${a.warning.level}`
+                                                        : 'Hoạt động hệ thống'}
+                                                </span>
+                                            </div>
+
+                                            <time>
+                                                {new Date(a.created).toLocaleTimeString('vi-VN', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </time>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </article>
                     </div>
-                </div>
-            </div>
-            {showGuestsModal && selectedGuests && (
-                <div className={styles.modal}>
-                    <div className={styles.modal_content}>
-                        <div className={styles.header}>
-                            <div className={styles.company_info}>
-                                <h2>⚡Minto</h2>
-                                <p>mintoinvitions@gmail.com</p>
-                            </div>
-                            <div className={styles.invoice_info}>
-                                <h3>Hóa đơn thanh toán</h3>
-                                <p>
-                                    <strong>Số hóa đơn:</strong> T{selectedGuests.template_id}-C
-                                    {selectedGuests.guests[0]?.card_id || 'N/A'}
-                                </p>
-                                <p>
-                                    <strong>Ngày thực hiện:</strong>{' '}
-                                    {selectedGuests.paymentDate
-                                        ? new Date(selectedGuests.paymentDate)
-                                              .toLocaleString('vi-VN', {
-                                                  hour: '2-digit',
-                                                  minute: '2-digit',
-                                                  hour12: true,
-                                                  day: 'numeric',
-                                                  month: 'long',
-                                                  year: 'numeric',
-                                                  timeZone: 'Asia/Ho_Chi_Minh',
-                                              })
-                                              .replace(' lúc ', ' ')
-                                        : 'Chưa có'}
-                                </p>
-                                <p>
-                                    <strong>Hóa đơn cho:</strong> {selectedGuests.templateName}
-                                </p>
-                                <p>
-                                    <strong>Người thực hiện:</strong> {user?.full_name || 'Chưa cập nhật'}
-                                </p>
-                                <p>
-                                    <strong>Email:</strong> {user?.email || 'Chưa cập nhật'}
-                                </p>
-                                <p>
-                                    <strong>Giá Template:</strong>{' '}
-                                    {parseFloat(selectedGuests.price).toLocaleString('vi-VN')} VNĐ
-                                </p>
-                                <p>
-                                    <strong>Giá tính thêm:</strong>{' '}
-                                    {selectedGuests.guests.length > 20
-                                        ? `+${selectedGuests.guests.length - 20} khách mời (${(
-                                              (selectedGuests.guests.length - 20) *
-                                              500
-                                          ).toLocaleString('vi-VN')} VNĐ)`
-                                        : '0 VNĐ'}
-                                </p>
-                                <p>
-                                    <strong>Giá Thanh toán:</strong>{' '}
-                                    {selectedGuests.paymentAmount
-                                        ? `${parseFloat(selectedGuests.paymentAmount).toLocaleString('vi-VN')} VNĐ`
-                                        : 'Chưa có'}
-                                </p>
-                            </div>
-                            <div className={styles.btn_export_file} onClick={exportGuestLinks}>
-                                Xuất file danh sách khách mời
-                            </div>
-                        </div>
-                        <div className={styles.body}>
-                            {selectedGuests.guests.length === 0 ? (
-                                <p>Chưa có khách mời nào.</p>
-                            ) : (
-                                <table className={styles.invoice_table}>
-                                    <thead>
-                                        <tr>
-                                            <th>Mô tả</th>
-                                            <th>Link Mời</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedGuests.guests.map((guest) => {
-                                            const link: string = `${
-                                                process.env.NEXT_PUBLIC_BASE_URL || ''
-                                            }/template/${selectedGuests.template_id}/${guest.guest_id}/${guest.invitation_id}/${guest.card_id}`;
-                                            return (
-                                                <tr key={guest.guest_id}>
-                                                    <td data-label="Mô tả">
-                                                        <a href={link}>Khách - {guest.full_name}</a>
-                                                    </td>
-                                                    <td data-label="Link Mời">
-                                                        {guest.card_id ? (
-                                                            <FontAwesomeIcon
-                                                                icon={faCopy}
-                                                                style={{ marginLeft: '3rem', cursor: 'pointer' }}
-                                                                onClick={() => copyToClipboard(link)}
-                                                            />
-                                                        ) : (
-                                                            <span style={{ color: '#ff9999' }}>
-                                                                Link không khả dụng (thiếu card_id)
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                        <div className={styles.footer}>
-                            <button className={styles.close_button} onClick={handleCloseGuestsModal}>
-                                Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            <QRPopupCreated isOpen={showQrPopup} onClose={handleCloseQrPopup} qrData={qrData} banks={banks} />
-            {showFeedback && templateId && user && <UserFeedback templateId={templateId} />}
-        </div>
+                </section>
+            </main>
+
+            {/* Popups giữ nguyên */}
+            {isCreateCamOpen && <CreateCameraPopup onClose={() => setIsCreateCamOpen(false)} onSuccess={loadProfile} />}
+            {isRelativeSearchOpen && <RelativeSearchNav onClose={() => setIsRelativeSearchOpen(false)} />}
+            {isRequireListOpen && <RequiredRelationshipList onClose={() => setIsRequireListOpen(false)} />}
+        </>
     );
 }
-
-export default AccountInfo;

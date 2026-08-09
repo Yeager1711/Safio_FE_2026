@@ -1,59 +1,9 @@
 'use client';
-import { showToastError } from 'app/Ultils/toast';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { isTokenExpired } from 'app/Ultils/check_TokenExpired/isTokenExpired';
 import axios from 'axios';
-
-// Define ImageKitAuthParams interface
-interface ImageKitAuthParams {
-    token: string;
-    expire: number;
-    signature: string;
-}
-
-// Define WeddingData interface
-interface WeddingData {
-    banner?: { image: string };
-    couple?: {
-        names?: string;
-        groom?: { name: string; image: string };
-        bride?: { name: string; image: string };
-    };
-    invitation?: {
-        title?: string;
-        subtitle?: string;
-        day?: string;
-        month?: string;
-        year?: string;
-        dayOfWeek?: string;
-        time?: string;
-        lunarDate?: string;
-        monthYear?: string;
-    };
-    loveQuote_1?: string;
-    loveQuote_2?: string;
-    familyInfo?: {
-        groomFamily?: { title: string; father: string; mother: string };
-        brideFamily?: { title: string; father: string; mother: string };
-    };
-    eventDetails?: string;
-    calendar?: { month: string; days: (string | number)[]; highlightDay: number };
-    location?: {
-        groomLocation?: { name: string; address: string; mapEmbedUrl: string };
-        brideLocation?: { name: string; address: string; mapEmbedUrl: string };
-    };
-    coupleImages?: { src: string; alt: string; isCenter?: boolean }[];
-    thumnailImages?: { src: string; alt: string; isCenter?: boolean }[];
-}
-
-interface AxiosErrorResponse {
-    response?: {
-        data?: {
-            message?: string;
-        };
-    };
-}
+import { isTokenExpired } from 'app/Ultils/check_TokenExpired/isTokenExpired';
 
 interface LoginData {
     email: string;
@@ -65,803 +15,725 @@ interface RegisterData {
     email: string;
     password: string;
     confirmPassword: string;
+    date_of_birth: string;
+    phone_number?: string;
 }
 
 interface LoginResponse {
     accessToken: string;
-
     user: {
+        _id: string;
         full_name: string;
+        email: string;
+        age?: number;
+        phone_number?: string;
+        role: string;
     };
 }
 
-interface UserProfile {
-    user_id: number;
+export interface RelativeResponse {
+    user_id: string;
     full_name: string;
     email: string;
-    phone: string | null;
-    address: string | null;
-    created_at: Date
-    role: {
-        role_id: number;
-        name: string;
+    phone_number?: string;
+    relationship: string;
+    date_of_birth?: string;
+    group_id?: string;
+    source: 'family_group' | 'relative';
+    acceptance_status: 'pending' | 'accepted' | 'denied';
+}
+
+export interface UserProfileResponse {
+    user: {
+        _id?: string;
+        user_id: string | { _id: string; full_name: string; email: string };
+        full_name: string;
+        email: string;
+        date_of_birth?: string;
+        phone_number?: string;
+        role: string;
+        created_at: string;
+        age?: number;
+        require_face_id?: boolean;
+    };
+    relatives: RelativeResponse[];
+    cameras: any[];
+    activity_logs: any[];
+    notifications: any[];
+}
+
+interface SearchUserResponse {
+    data: Array<any>;
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
     };
 }
 
-interface CreateCategoryData {
-    category_name: string;
+export interface RelativeItem {
+    _id: string;
+    user_id: {
+        _id: string;
+        full_name: string;
+        email: string;
+    };
+    relative_user_id: {
+        _id: string;
+        full_name: string;
+        email: string;
+    };
+    relationship: string;
+    acceptance_status: 'pending' | 'accepted' | 'denied';
+    createdAt: string;
+    updatedAt?: string;
 }
 
-interface CreateCategoryResponse {
-    statusCode: number;
+export interface FamilyRequestResponse {
+    pending: RelativeItem[];
+    accepted: RelativeItem[];
+    denied: RelativeItem[];
+}
+
+export interface FaceImageInput {
+    angle: FaceAngle;
+    image: string;
+}
+
+export interface RegisterFaceData {
+    images: FaceImageInput[];
+}
+
+// ============================================================
+// FACE ID TYPES
+// ============================================================
+
+export type FaceAngle = 'front' | 'left' | 'right' | 'up';
+
+export interface FaceEmbeddingResponse {
+    id: string;
+    angle: FaceAngle;
+    image: string;
+    has_embedding: boolean;
+    confidence: number;
+}
+
+export interface FaceUserResponse {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    role?: string;
+    age?: number;
+    age_text?: string;
+}
+
+export interface FaceProfileResponse {
+    id: string;
+    user_id: string;
+    user: FaceUserResponse;
+    status: 'pending' | 'registered';
+    registered_at: string | null;
+    embeddings: FaceEmbeddingResponse[];
+}
+
+export interface FaceProfileApiResponse {
+    success: boolean;
+    data: FaceProfileResponse;
+}
+
+export interface RegisterFaceResponse {
+    success: boolean;
     message: string;
     data: {
-        category_id: number;
-        category_name: string;
+        user_id: string;
+        face_profile_id: string;
+        status: string;
+        angles: FaceAngle[];
     };
 }
 
-interface Category {
-    category_id: number;
-    category_name: string;
+// ============================================================
+// FACE ID VERIFY LOGIN TYPES
+// ============================================================
+
+export interface VerifyFaceData {
+    images: string[];
 }
 
-interface CreateTemplateData {
-    template_id?: number;
-    name: string;
-    description?: string;
-    price: number;
-    category_id: number;
-    status: string;
-    image_url: string;
-}
-
-interface CreateTemplateResponse {
-    template_id: number;
-    name: string;
-    description?: string;
-    image_url: string;
-    price: string;
-    category_id: number;
-    status: string;
-    message?: string;
-}
-
-interface TemplateResponse {
-    card_id: number;
-    template: {
-        template_id: number;
+export interface VerifyFaceResponse {
+    success: boolean;
+    matched: boolean;
+    confidence: number;
+    token?: string;
+    user?: {
+        id: string;
         name: string;
-        image_url: string;
-        price: string;
-        payments: {
-            amount: string;
-            payment_date: string;
-            status: string;
-            payment_method: string;
-        }[];
-        guests: {
-            guest_id: number;
-            invitation_id: number;
-            full_name: string;
-            card_id: number;
-        }[];
+        email: string;
     };
 }
 
-interface Template {
-    template_id: number;
-    name: string;
-    description?: string;
-    image_url: string;
-    price: number;
-    status: string;
-    category: Category;
-}
-
-interface SaveCardData {
-    templateId: number;
-    weddingData: WeddingData;
-    weddingImages: { position: string; url: string }[];
-    inviteeNames: string[];
-    totalPrice: number;
-}
-
-interface SaveCardResponse {
-    card_id: number;
-    user_id: number;
-    template_id: number;
-    created_at: string;
-    status: string;
-    custom_data: WeddingData;
-}
-
-interface Guest {
-    guest_id: number;
-    invitation_id: number;
-    full_name: string;
-    card_id: number;
-}
-
-interface Card {
-    user_id: number;
-    card_id: number;
-    created_at: string;
-    status: string;
-    custom_data: {
-        weddingData: WeddingData;
-        weddingImages: { url: string; position: string }[];
-    };
-    template: {
-        template_id: number;
-        name: string;
-        description: string;
-        image_url: string;
-        price: string;
-        status: string;
-    };
-    thumbnails: { thumbnail_id: number; image_url: string; position: string; description: string; card_id: number }[];
-    invitations: {
-        invitation_id: number;
-        groom_name: string;
-        bride_name: string;
-        wedding_date: string;
-        venue_groom: string;
-        venue_bride: string;
-        lunar_day: string;
-        story_groom: string;
-        story_bride: string;
-        custom_image: string;
-    }[];
-}
-
-interface ApiResponse {
-    guest: Guest;
-    card: Card;
-}
-
-interface QrData {
-    bank: string;
-    accountNumber: string;
-    accountHolder: string;
-    qrCodeUrl: string;
-}
-
-interface QrResponse {
-    qrId: number;
-    bank: string;
-    accountNumber: string;
-    accountHolder: string;
-    qrCodeUrl: string;
-    createdAt: Date;
-    status: string;
-    representative: string;
-}
-
-interface SubmitErrorResponse {
-    message: string;
-    feedback?: {
-        feedback_id: number;
-        error_message: string;
-        submitted_at: string;
-        status: string;
-    };
-}
-
-interface ErrorFeedbackResponse {
-    feedbacks: {
-        feedback_id: number;
-        error_message: string;
-        submitted_at: string;
-        status: string;
-        resolved_at: string | null;
-        resolution_notes: string | null;
-        user: {
-            user_id: number;
-            full_name: string;
-            email: string;
-        };
-    }[];
-}
-
-// Định nghĩa interface cho phản hồi từ API checkDiscountEligibility
-interface DiscountEligibilityResponse {
-    isEligible: boolean;
+export interface DeleteFaceResponse {
+    success: boolean;
     message: string;
 }
+
+// ============================================================
+// FACE ID REQUIRE / STATUS TYPES
+// ============================================================
+
+export interface FaceIdStatusResponse {
+    require_face_id: boolean;
+    has_face_profile: boolean;
+    has_embeddings: boolean;
+    embedding_count: number;
+    face_status: string | null;
+    registered_at: string | null;
+    is_ready: boolean;
+}
+
+export interface UpdateRequireFaceIdResponse {
+    require_face_id: boolean;
+    message: string;
+}
+
+// ============================================================
+// CONTEXT TYPE
+// ============================================================
 
 interface ApiContextType {
     accessToken: string | null;
     login: (data: LoginData) => Promise<LoginResponse>;
-    register: (data: RegisterData) => Promise<void>;
-    getUserProfile: () => Promise<UserProfile>;
-    createCategory: (data: CreateCategoryData) => Promise<CreateCategoryResponse>;
-    getCategories: () => Promise<Category[]>;
-    createTemplate: (data: CreateTemplateData) => Promise<CreateTemplateResponse>;
-    getTemplates: () => Promise<Template[]>;
-    saveCard: (data: SaveCardData) => Promise<SaveCardResponse>;
-    getUserTemplates: () => Promise<TemplateResponse[]>;
-    getGuestAndCard: (
-        template_id: string,
-        guest_id: string,
-        invitation_id: string,
-        card_id: string
-    ) => Promise<ApiResponse>;
-    fetchAuthParams: () => Promise<ImageKitAuthParams>;
-    updateUserName: (fullName: string) => Promise<UserProfile>;
-    createQr: (data: QrData) => Promise<QrResponse>;
-    getUserQr: () => Promise<QrResponse[]>;
-    getUserQrPublic: (userId: number) => Promise<QrResponse[]>; // Updated return type
-    updateQrStatus: (qrId: number, status: 'ACTIVE' | 'SUCCESS') => Promise<QrResponse>;
-    submitPostError: (errorMessage: string) => Promise<SubmitErrorResponse>;
-    getAllErrorFeedback: () => Promise<ErrorFeedbackResponse>;
-    updateErrorFeedbackStatus: (feedbackId: number, status: string, resolutionNotes?: string) => Promise<void>;
-    getUserErrorFeedback: () => Promise<ErrorFeedbackResponse>;
-    checkDiscountEligibility: () => Promise<DiscountEligibilityResponse>;
+    register: (data: RegisterData) => Promise<LoginResponse>;
+    getUserProfile: () => Promise<UserProfileResponse>;
+    logout: () => void;
+    searchUsers: (query: string, page?: number, limit?: number) => Promise<SearchUserResponse>;
+    requestRelative: (relativeUserId: string, relationship: string) => Promise<any>;
+    getFamilyRequest: () => Promise<FamilyRequestResponse>;
+    acceptRelativeRequest: (requestId: string, relationship?: string) => Promise<any>;
+    denyRelativeRequest: (requestId: string) => Promise<any>;
+    getFamilyMembers: () => Promise<any>;
+    createCamera: (cameraData: any) => Promise<any>;
+    registerFace: (data: RegisterFaceData) => Promise<RegisterFaceResponse>;
+    getFaceProfile: () => Promise<FaceProfileApiResponse>;
+    verifyFace: (data: VerifyFaceData) => Promise<VerifyFaceResponse>;
+    deleteFace: (userId: string) => Promise<DeleteFaceResponse>;
+    getFaceIdStatus: () => Promise<FaceIdStatusResponse>;
+    updateRequireFaceId: (requireFaceId: boolean) => Promise<UpdateRequireFaceIdResponse>;
 }
 
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
-const apiUrl = process.env.NEXT_PUBLIC_APP_API_BASE_URL;
-
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(false);
+    const apiUrl = 'http://localhost:8888/api/v1';
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (token && !isTokenExpired(token)) {
             setAccessToken(token);
         } else {
-            setAccessToken(null);
             localStorage.removeItem('accessToken');
         }
         setIsReady(true);
     }, []);
 
-    const fetchAuthParams = async (): Promise<ImageKitAuthParams> => {
-        try {
-            const response = await axios.get(`${apiUrl}/imagekit/auth`, {
-                headers: {
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            const data = response.data;
-            if (!data.token || !data.expire || !data.signature) {
-                throw new Error('Thông số xác thực ImageKit không hợp lệ');
-            }
-            return data;
-        } catch (error) {
-            console.error('Lỗi khi lấy thông số xác thực ImageKit:', error);
-            showToastError('Không thể kết nối với ImageKit. Vui lòng thử lại.');
-            throw error;
-        }
+    const showError = (msg: string) => {
+        toast.error(msg, {
+            position: 'top-right',
+            autoClose: 5000,
+        });
     };
+
+    const showSuccess = (msg: string) => {
+        toast.success(msg, {
+            position: 'top-right',
+            autoClose: 3000,
+        });
+    };
+
+    // ============================================================
+    // AUTH
+    // ============================================================
 
     const login = async (data: LoginData): Promise<LoginResponse> => {
         try {
-            const response = await axios.post(`${apiUrl}/auth/login`, data);
-            const token = response.data.accessToken;
+            const res = await axios.post(`${apiUrl}/auth/login`, data);
+            const token = res.data.accessToken ?? res.data.token;
+
+            if (!token) {
+                throw new Error('Backend không trả về accessToken');
+            }
+
             localStorage.setItem('accessToken', token);
             setAccessToken(token);
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Đăng nhập thất bại';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
+            showSuccess('Đăng nhập thành công!');
 
-    const register = async (data: RegisterData): Promise<void> => {
-        try {
-            await axios.post(`${apiUrl}/auth/register`, data);
-            toast.success('Đăng ký thành công');
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Đã có lỗi xảy ra, vui lòng thử lại';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const getUserProfile = async (): Promise<UserProfile> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.get(`${apiUrl}/users/profile`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể lấy thông tin người dùng';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const createCategory = async (data: CreateCategoryData): Promise<CreateCategoryResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.post(`${apiUrl}/categories/add-template`, data, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            toast.success(response.data.message || 'Danh mục đã được tạo thành công');
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Lỗi khi tạo danh mục, vui lòng thử lại';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const getCategories = async (): Promise<Category[]> => {
-        try {
-            const response = await axios.get(`${apiUrl}/categories/getCategories`, {
-                headers: {
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể lấy danh sách danh mục';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const createTemplate = async (data: CreateTemplateData): Promise<CreateTemplateResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.post(`${apiUrl}/templates/add-template`, data, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Lỗi khi tạo mẫu thiệp';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const getTemplates = async (): Promise<Template[]> => {
-        try {
-            const response = await axios.get(`${apiUrl}/templates/getTemplate`, {
-                headers: {
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể lấy danh sách mẫu thiệp';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const saveCard = async (data: SaveCardData): Promise<SaveCardResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            console.log('Dữ liệu nhận được trong saveCard:', data);
-
-            const preparedData = {
-                templateId: data.templateId,
-                weddingData: data.weddingData,
-                weddingImages: data.weddingImages,
-                inviteeNames: data.inviteeNames,
-                totalPrice: data.totalPrice,
+            return {
+                accessToken: token,
+                user: res.data.user,
             };
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Đăng nhập thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
 
-            console.log('Dữ liệu gửi đi:', preparedData);
+    const register = async (data: RegisterData): Promise<LoginResponse> => {
+        try {
+            const res = await axios.post(`${apiUrl}/auth/register`, data);
+            const token = res.data.accessToken ?? res.data.token;
+            const user = res.data.user;
 
-            const response = await axios.post(`${apiUrl}/cards/save-card`, preparedData, {
+            if (!token) {
+                throw new Error('Backend không trả về accessToken');
+            }
+
+            localStorage.setItem('accessToken', token);
+            setAccessToken(token);
+            showSuccess('Đăng ký thành công! Đã đăng nhập tự động');
+
+            return {
+                accessToken: token,
+                user,
+            };
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Đăng ký thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const logout = () => {
+        localStorage.removeItem('accessToken');
+        setAccessToken(null);
+        showSuccess('Đã đăng xuất');
+    };
+
+    // ============================================================
+    // USER
+    // ============================================================
+
+    const getUserProfile = async (): Promise<UserProfileResponse> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.get(`${apiUrl}/users/profile`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'ngrok-skip-browser-warning': 'true',
+                },
+            });
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể lấy thông tin người dùng';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const searchUsers = async (query: string, page = 1, limit = 20): Promise<SearchUserResponse> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.get(`${apiUrl}/users/search_User`, {
+                params: { q: query, page, limit },
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+            });
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Tìm kiếm thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    // ============================================================
+    // RELATIVE / FAMILY
+    // ============================================================
+
+    const requestRelative = async (relativeUserId: string, relationship: string) => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.post(
+                `${apiUrl}/relative/invite`,
+                {
+                    relative_user_id: relativeUserId,
+                    relationship,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+            showSuccess('Đã gửi yêu cầu người thân thành công!');
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Gửi yêu cầu thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const getFamilyRequest = async (): Promise<FamilyRequestResponse> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.get(`${apiUrl}/relative/family-requests`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+            });
+
+            if (Array.isArray(res.data)) {
+                return {
+                    pending: res.data,
+                    accepted: [],
+                    denied: [],
+                };
+            }
+
+            return {
+                pending: res.data.pending ?? [],
+                accepted: res.data.accepted ?? [],
+                denied: res.data.denied ?? [],
+            };
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể tải danh sách';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const acceptRelativeRequest = async (requestId: string, relationship: string = 'Người thân') => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.post(
+                `${apiUrl}/relative/respond/${requestId}`,
+                {
+                    action: 'accept',
+                    relationship: relationship.trim(),
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'ngrok-skip-browser-warning': 'true',
+                    },
+                }
+            );
+            showSuccess('Đã chấp nhận kết nối người thân!');
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Chấp nhận thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const denyRelativeRequest = async (requestId: string) => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.post(
+                `${apiUrl}/relative/respond/${requestId}`,
+                {
+                    action: 'deny',
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'ngrok-skip-browser-warning': 'true',
+                    },
+                }
+            );
+            showSuccess('Đã từ chối lời mời');
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Từ chối thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const getFamilyMembers = async (): Promise<any> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.get(`${apiUrl}/relative/family-members`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+            });
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể tải danh sách gia đình';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    // ============================================================
+    // CAMERA
+    // ============================================================
+
+    const createCamera = async (cameraData: any): Promise<any> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.post(`${apiUrl}/camera/create`, cameraData, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+            });
+            showSuccess('Tạo camera thành công!');
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Tạo camera thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    // ============================================================
+    // FACE ID - REGISTER
+    // ============================================================
+
+    const registerFace = async (data: RegisterFaceData): Promise<RegisterFaceResponse> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        if (!data?.images || data.images.length !== 4) {
+            throw new Error('Cần đủ 4 ảnh khuôn mặt');
+        }
+
+        const requiredAngles: FaceAngle[] = ['front', 'left', 'right', 'up'];
+        const receivedAngles = data.images.map((item) => item.angle);
+
+        for (const angle of requiredAngles) {
+            if (!receivedAngles.includes(angle)) {
+                throw new Error(`Thiếu góc khuôn mặt: ${angle}`);
+            }
+        }
+
+        try {
+            const res = await axios.post(`${apiUrl}/face-id/register`, data, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true',
                 },
+                timeout: 120000,
             });
-            console.log('Phản hồi từ saveCard:', response.data);
-            toast.success('Lưu thiệp thành công');
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Lỗi khi lưu thiệp, vui lòng thử lại';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
+
+            showSuccess('Đăng ký khuôn mặt thành công!');
+            return res.data;
+        } catch (err: any) {
+            console.error('❌ REGISTER FACE ERROR:', err);
+
+            const responseMessage = err.response?.data?.message;
+            const msg = Array.isArray(responseMessage)
+                ? responseMessage.join(', ')
+                : responseMessage || err.message || 'Đăng ký khuôn mặt thất bại';
+
+            showError(msg);
+            throw new Error(msg);
         }
     };
 
-    const getUserTemplates = async (): Promise<TemplateResponse[]> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
+    const getFaceProfile = async (): Promise<FaceProfileApiResponse> => {
+        if (!accessToken) throw new Error('Chưa đăng nhập');
+
         try {
-            const response = await axios.get(`${apiUrl}/cards/user-templates`, {
+            const res = await axios.get(`${apiUrl}/face-id/profile`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'ngrok-skip-browser-warning': 'true',
                 },
+                timeout: 30000,
             });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể lấy danh sách template';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
+
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể lấy thông tin khuôn mặt';
+            showError(msg);
+            throw new Error(msg);
         }
     };
 
-    const getGuestAndCard = async (
-        template_id: string,
-        guest_id: string,
-        invitation_id: string,
-        card_id: string
-    ): Promise<ApiResponse> => {
+    // ============================================================
+    // FACE ID - VERIFY LOGIN
+    // ============================================================
+
+    const verifyFace = async (data: VerifyFaceData): Promise<VerifyFaceResponse> => {
+        if (!data?.images || !Array.isArray(data.images) || data.images.length < 2) {
+            throw new Error('Cần ít nhất 2 ảnh khuôn mặt');
+        }
+
         try {
-            if (!apiUrl) {
-                throw new Error('API base URL is not defined in environment variables');
-            }
-
-            if (!template_id || !guest_id || !invitation_id || !card_id) {
-                throw new Error(
-                    `Thiếu tham số: template_id=${template_id}, guest_id=${guest_id}, invitation_id=${invitation_id}, card_id=${card_id}`
-                );
-            }
-
-            const response = await axios.get<ApiResponse>(
-                `${apiUrl}/cards/${template_id}/${guest_id}/${invitation_id}/${card_id}`,
-                {
-                    headers: {
-                        'ngrok-skip-browser-warning': 'true',
-                    },
-                }
-            );
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể tải dữ liệu thiệp cưới';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const updateUserName = async (fullName: string): Promise<UserProfile> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.patch(
-                `${apiUrl}/users/profile/name`,
-                { full_name: fullName },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'ngrok-skip-browser-warning': 'true',
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-            toast.success('Cập nhật tên thành công');
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể cập nhật tên';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const createQr = async (data: QrData): Promise<QrResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.post(`${apiUrl}/qr/create`, data, {
+            const res = await axios.post(`${apiUrl}/face-id/verify`, data, {
                 headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': 'true',
                     'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true',
                 },
+                timeout: 120000,
             });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Lỗi khi tạo QR, vui lòng thử lại';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
+
+            const result = res.data;
+
+            if (result.success && result.token) {
+                localStorage.setItem('accessToken', result.token);
+                setAccessToken(result.token);
+                showSuccess('Xác thực thành công!');
+            }
+
+            return result;
+        } catch (err: any) {
+            console.error('VERIFY FACE ERROR:', err);
+            const msg = err.response?.data?.message || err.message || 'Xác thực khuôn mặt thất bại';
+            showError(msg);
+            throw new Error(msg);
         }
     };
 
-    const getUserQr = async (): Promise<QrResponse[]> => {
+    const deleteFace = async (userId: string): Promise<DeleteFaceResponse> => {
         if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
+            throw new Error('Chưa đăng nhập');
         }
+        if (!userId) {
+            throw new Error('Không xác định được người dùng');
+        }
+
         try {
-            const response = await axios.get(`${apiUrl}/qr/my-qrs`, {
+            const res = await axios.delete(`${apiUrl}/face-id/profile/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+                timeout: 30000,
+            });
+            showSuccess('Đã xoá dữ liệu khuôn mặt');
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Xoá dữ liệu khuôn mặt thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    // ============================================================
+    // FACE ID - STATUS & REQUIRE
+    // ============================================================
+
+    const getFaceIdStatus = async (): Promise<FaceIdStatusResponse> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.get(`${apiUrl}/users/face-id/status`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'ngrok-skip-browser-warning': 'true',
                 },
             });
-            const qrList = response.data;
-            if (!Array.isArray(qrList) || qrList.length === 0) {
-                throw new Error('Không tìm thấy mã QR');
-            }
-            return qrList;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : '';
-            throw new Error(errorMessage);
+
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể lấy trạng thái Face ID';
+            showError(msg);
+            throw new Error(msg);
         }
     };
 
-    const getUserQrPublic = async (userId: number): Promise<QrResponse[]> => {
-        try {
-            const response = await axios.get(`${apiUrl}/qr/public/qrs/${userId}`, {
-                headers: {
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            const qrList = response.data;
-            if (!Array.isArray(qrList) || qrList.length === 0) {
-                throw new Error('Không tìm thấy mã QR');
-            }
-            return qrList; // Return the full array of QR codes
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : '';
-
-            throw new Error(errorMessage);
-        }
-    };
-
-    const updateQrStatus = async (qrId: number, status: 'ACTIVE' | 'SUCCESS'): Promise<QrResponse> => {
+    const updateRequireFaceId = async (requireFaceId: boolean): Promise<UpdateRequireFaceIdResponse> => {
         if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
+            throw new Error('Chưa đăng nhập');
         }
+
         try {
-            const response = await axios.patch(
-                `${apiUrl}/qr/${qrId}/status`,
-                { status },
+            const res = await axios.patch(
+                `${apiUrl}/users/face-id/require`,
+                { require_face_id: requireFaceId },
                 {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
-                        'ngrok-skip-browser-warning': 'true',
                         'Content-Type': 'application/json',
-                    },
-                }
-            );
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Lỗi khi cập nhật trạng thái QR, vui lòng thử lại';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const submitPostError = async (errorMessage: string): Promise<SubmitErrorResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.post(
-                `${apiUrl}/error-feedback/submit`,
-                { errorMessage },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
                         'ngrok-skip-browser-warning': 'true',
                     },
                 }
             );
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể gửi phản hồi';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
+
+            showSuccess(requireFaceId ? 'Đã bật yêu cầu xác thực Face ID' : 'Đã tắt yêu cầu xác thực Face ID');
+
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể cập nhật cài đặt Face ID';
+            showError(msg);
+            throw new Error(msg);
         }
     };
 
-    const getAllErrorFeedback = async (): Promise<ErrorFeedbackResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.get(`${apiUrl}/error-feedback/all-error-feedback`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể lấy danh sách phản hồi lỗi';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
+    // ============================================================
+    // CONTEXT VALUE
+    // ============================================================
 
-    const updateErrorFeedbackStatus = async (feedbackId: number, status: string, resolutionNotes?: string) => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            await axios.patch(
-                `${apiUrl}/error-feedback/${feedbackId}`,
-                { status, resolutionNotes },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'ngrok-skip-browser-warning': 'true',
-                    },
-                }
-            );
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể cập nhật trạng thái phản hồi';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const getUserErrorFeedback = async (): Promise<ErrorFeedbackResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.get(`${apiUrl}/error-feedback/user-feedbacks`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể lấy danh sách phản hồi lỗi của người dùng';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const checkDiscountEligibility = async (): Promise<DiscountEligibilityResponse> => {
-        if (!accessToken) {
-            throw new Error('Vui lòng đăng nhập');
-        }
-        try {
-            const response = await axios.get(`${apiUrl}/users/check-discount-eligibility`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': 'true',
-                },
-            });
-            return response.data;
-        } catch (err: unknown) {
-            const axiosError = err as AxiosErrorResponse;
-            const errorMessage =
-                axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string'
-                    ? axiosError.response.data.message
-                    : 'Không thể kiểm tra điều kiện ưu đãi';
-            showToastError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    };
-
-    const value = {
+    const value: ApiContextType = {
         accessToken,
         login,
         register,
         getUserProfile,
-        createCategory,
-        getCategories,
-        createTemplate,
-        getTemplates,
-        saveCard,
-        getUserTemplates,
-        getGuestAndCard,
-        fetchAuthParams,
-        updateUserName,
-        createQr,
-        getUserQr,
-        getUserQrPublic,
-        updateQrStatus,
-        submitPostError,
-        getAllErrorFeedback,
-        updateErrorFeedbackStatus,
-        getUserErrorFeedback,
-        checkDiscountEligibility,
+        logout,
+        searchUsers,
+        requestRelative,
+        getFamilyRequest,
+        acceptRelativeRequest,
+        denyRelativeRequest,
+        getFamilyMembers,
+        createCamera,
+        registerFace,
+        getFaceProfile,
+        deleteFace,
+        verifyFace,
+        getFaceIdStatus,
+        updateRequireFaceId,
     };
 
     return <ApiContext.Provider value={value}>{isReady ? children : null}</ApiContext.Provider>;
 };
 
-export function useApi() {
+export const useApi = (): ApiContextType => {
     const context = useContext(ApiContext);
     if (!context) {
-        throw new Error('useApi must be used within an ApiProvider');
+        throw new Error('useApi phải được dùng trong ApiProvider');
     }
     return context;
-}
+};
