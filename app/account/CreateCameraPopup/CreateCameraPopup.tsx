@@ -46,6 +46,7 @@ export default function CreateCameraPopup({ onClose, onSuccess }: CreateCameraPo
             alert('Tên camera là bắt buộc');
             return;
         }
+
         if (!form.location.trim()) {
             alert('Vị trí là bắt buộc');
             return;
@@ -54,12 +55,51 @@ export default function CreateCameraPopup({ onClose, onSuccess }: CreateCameraPo
         setLoading(true);
 
         try {
-            await createCamera(form); // Gọi API qua context
+            const payload = {
+                cam_name: form.cam_name.trim(),
+                location: form.location.trim(),
+                camera_type: form.camera_type,
 
-            onSuccess(); // Refresh danh sách camera hoặc đóng popup
+                // =====================================================
+                // EZVIZ
+                // =====================================================
+
+                app_key: form.camera_type === 'Ezviz' ? form.ezviz_app_key.trim() : undefined,
+
+                app_secret: form.camera_type === 'Ezviz' ? form.ezviz_app_secret.trim() : undefined,
+
+                ezviz_username: form.camera_type === 'Ezviz' ? form.ezviz_username.trim() : undefined,
+
+                ezviz_password: form.camera_type === 'Ezviz' ? form.ezviz_password : undefined,
+
+                device_serial: form.camera_type === 'Ezviz' ? form.ezviz_device_serial.trim() : undefined,
+
+                verify_code: form.camera_type === 'Ezviz' ? form.ezviz_verify_code.trim() : undefined,
+
+                // =====================================================
+                // IMOU
+                // =====================================================
+
+                imou_app_id: form.camera_type === 'Imou' ? form.imou_app_id.trim() : undefined,
+
+                imou_app_secret: form.camera_type === 'Imou' ? form.imou_app_secret.trim() : undefined,
+
+                imou_account: form.camera_type === 'Imou' ? form.imou_account.trim() : undefined,
+
+                imou_password: form.camera_type === 'Imou' ? form.imou_password : undefined,
+
+                imou_device_id: form.camera_type === 'Imou' ? form.imou_device_id.trim() : undefined,
+
+                imou_rtsp_url: form.camera_type === 'Imou' ? form.imou_rtsp_url.trim() : undefined,
+            };
+
+            console.log('CREATE CAMERA PAYLOAD:', payload);
+
+            await createCamera(payload);
+
+            onSuccess();
             onClose();
         } catch (error) {
-            // Lỗi đã được toast.error trong apiContext rồi
             console.error('Create camera error:', error);
         } finally {
             setLoading(false);

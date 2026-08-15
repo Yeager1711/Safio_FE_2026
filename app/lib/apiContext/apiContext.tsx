@@ -166,12 +166,7 @@ export interface VerifyFaceResponse {
     success: boolean;
     matched: boolean;
     confidence: number;
-    token?: string;
-    user?: {
-        id: string;
-        name: string;
-        email: string;
-    };
+    message: string;
 }
 
 export interface DeleteFaceResponse {
@@ -217,6 +212,7 @@ interface ApiContextType {
     createCamera: (cameraData: any) => Promise<any>;
     registerFace: (data: RegisterFaceData) => Promise<RegisterFaceResponse>;
     getFaceProfile: () => Promise<FaceProfileApiResponse>;
+    getCameras: () => Promise<any>;
     verifyFace: (data: VerifyFaceData) => Promise<VerifyFaceResponse>;
     deleteFace: (userId: string) => Promise<DeleteFaceResponse>;
     getFaceIdStatus: () => Promise<FaceIdStatusResponse>;
@@ -507,7 +503,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         try {
-            const res = await axios.post(`${apiUrl}/camera/create`, cameraData, {
+            const res = await axios.post(`${apiUrl}/cameras/create`, cameraData, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'ngrok-skip-browser-warning': 'true',
@@ -517,6 +513,26 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return res.data;
         } catch (err: any) {
             const msg = err.response?.data?.message || err.message || 'Tạo camera thất bại';
+            showError(msg);
+            throw new Error(msg);
+        }
+    };
+
+    const getCameras = async (): Promise<any> => {
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        try {
+            const res = await axios.get(`${apiUrl}/cameras/get-cameras`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+            });
+            return res.data;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || 'Không thể lấy danh sách camera';
             showError(msg);
             throw new Error(msg);
         }
@@ -594,14 +610,18 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // ============================================================
 
     const verifyFace = async (data: VerifyFaceData): Promise<VerifyFaceResponse> => {
-        if (!data?.images || !Array.isArray(data.images) || data.images.length < 2) {
-            throw new Error('Cần ít nhất 2 ảnh khuôn mặt');
+        if (!accessToken) {
+            throw new Error('Chưa đăng nhập');
+        }
+
+        if (!data?.images || !Array.isArray(data.images) || data.images.length !== 3) {
+            throw new Error('Cần đủ 3 ảnh khuôn mặt');
         }
 
         try {
-            const res = await axios.post(`${apiUrl}/face-id/verify`, data, {
+            const res = await axios.post<VerifyFaceResponse>(`${apiUrl}/face-id/verify`, data, {
                 headers: {
-                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`,
                     'ngrok-skip-browser-warning': 'true',
                 },
                 timeout: 120000,
@@ -609,17 +629,25 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
             const result = res.data;
 
-            if (result.success && result.token) {
-                localStorage.setItem('accessToken', result.token);
-                setAccessToken(result.token);
-                showSuccess('Xác thực thành công!');
+            console.log('VERIFY FACE API RESULT:', {
+                success: result?.success,
+                matched: result?.matched,
+                confidence: result?.confidence,
+                message: result?.message,
+            });
+
+            if (result?.success === true && result?.matched === true) {
+                showSuccess(result.message || 'Xác thực khuôn mặt thành công!');
             }
 
             return result;
         } catch (err: any) {
             console.error('VERIFY FACE ERROR:', err);
+
             const msg = err.response?.data?.message || err.message || 'Xác thực khuôn mặt thất bại';
+
             showError(msg);
+
             throw new Error(msg);
         }
     };
@@ -719,6 +747,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         denyRelativeRequest,
         getFamilyMembers,
         createCamera,
+        getCameras,
         registerFace,
         getFaceProfile,
         deleteFace,

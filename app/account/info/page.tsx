@@ -23,8 +23,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FiSearch, FiCopy, FiMapPin, FiMenu } from 'react-icons/fi';
-import SecurityControls from './SecurityControls/SecurityControls';
+
 import { useRouter } from 'next/navigation';
+
+import SecurityControls from './SecurityControls/SecurityControls';
+import CameraNetwork from './CameraNetwork/CameraNetwork';
 
 type AcceptanceStatus = 'accepted' | 'pending' | 'denied';
 
@@ -76,7 +79,6 @@ export default function NyafAccountInfo() {
 
     const [currentFilter, setCurrentFilter] = useState<'family' | 'denied'>('family');
     const [securityEnabled, setSecurityEnabled] = useState(true);
-    const [activeCamera, setActiveCamera] = useState<string | null>(null);
 
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -115,9 +117,9 @@ export default function NyafAccountInfo() {
             setProfile(normalized);
 
             // Set camera active mặc định
-            if (normalized.cameras && normalized.cameras.length > 0) {
-                setActiveCamera(normalized.cameras[0]._id);
-            }
+            // if (normalized.cameras && normalized.cameras.length > 0) {
+            //     setActiveCamera(normalized.cameras[0]._id);
+            // }
         } catch (error) {
             console.error('Lỗi tải profile:', error);
         } finally {
@@ -432,63 +434,7 @@ export default function NyafAccountInfo() {
                         />
 
                         {/* CAMERA NETWORK */}
-                        <article className={styles.panel}>
-                            <div className={styles.panelHeader}>
-                                <div>
-                                    <span className={styles.panelEyebrow}>MONITORING</span>
-                                    <h2>Camera network</h2>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={styles.addCamera}
-                                    onClick={() => setIsCreateCamOpen(true)}
-                                >
-                                    +
-                                </button>
-                            </div>
-
-                            <div className={styles.cameraList}>
-                                {cameras.length === 0 ? (
-                                    <div className={styles.emptyState}>Chưa có camera nào</div>
-                                ) : (
-                                    cameras.map((c) => (
-                                        <button
-                                            key={c._id}
-                                            type="button"
-                                            className={`${styles.cameraItem} ${
-                                                activeCamera === c._id ? styles.cameraItemActive : ''
-                                            }`}
-                                            onClick={() => setActiveCamera(c._id)}
-                                        >
-                                            <div className={styles.cameraPreview}>
-                                                <FontAwesomeIcon icon={faVideo} />
-                                                {(c.status === 'Hoạt động' || c.status?.toLowerCase() === 'online') && (
-                                                    <span className={styles.cameraPulse} />
-                                                )}
-                                            </div>
-
-                                            <div className={styles.cameraInfo}>
-                                                <strong>{c.cam_name}</strong>
-                                                <span>
-                                                    <FiMapPin size={10} style={{ marginRight: 4 }} />
-                                                    {c.location}
-                                                </span>
-                                            </div>
-
-                                            <span
-                                                className={`${styles.cameraOnline} ${
-                                                    c.status === 'Hoạt động' || c.status?.toLowerCase() === 'online'
-                                                        ? ''
-                                                        : styles.cameraOffline
-                                                }`}
-                                            >
-                                                {c.status}
-                                            </span>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </article>
+                        <CameraNetwork onAddCamera={() => setIsCreateCamOpen(true)} />
 
                         {/* RELATIVES + ACTIVITY (span full) */}
                         <article className={styles.activityPanel}>
