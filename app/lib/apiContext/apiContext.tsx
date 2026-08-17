@@ -165,8 +165,20 @@ export interface VerifyFaceData {
 export interface VerifyFaceResponse {
     success: boolean;
     matched: boolean;
-    confidence: number;
-    message: string;
+    message?: string;
+
+    confidence?: number;
+
+    token?: string;
+
+    user?: {
+        user_id?: string;
+        full_name?: string;
+        name?: string;
+        email?: string;
+        role?: string;
+        age?: number;
+    };
 }
 
 export interface DeleteFaceResponse {
