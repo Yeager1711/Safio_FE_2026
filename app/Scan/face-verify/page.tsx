@@ -29,7 +29,7 @@ interface FacePose {
 }
 
 const CHALLENGES: { key: Challenge; title: string; description: string }[] = [
-    { key: 'center', title: 'Enroll face', description: 'Đưa khuôn mặt vào trong khung' },
+    { key: 'center', title: 'Enroll face', description: 'Đưa khuôn mặt lại gần khung' },
     { key: 'left', title: 'Move your head slowly', description: 'Từ từ xoay đầu sang trái' },
     { key: 'right', title: 'Move your head slowly', description: 'Từ từ xoay đầu sang phải' },
 ];
@@ -64,6 +64,7 @@ export default function FaceVerify({ isOpen, onClose, onSuccess }: FaceVerifyPro
 
     const challenge = CHALLENGES.find((item) => item.key === currentChallenge) || CHALLENGES[0];
     const capturedCount = capturedFramesRef.current.length;
+    const [isTooFar, setIsTooFar] = useState(false);
     const isSetup = status === 'setup';
     const isScanning = status === 'scan' || status === 'capturing';
     const isProcessing = status === 'processing';
@@ -223,6 +224,23 @@ export default function FaceVerify({ isOpen, onClose, onSuccess }: FaceVerifyPro
         }
     }
 
+    function getFaceSize(landmarks: any[]): number {
+        const leftEye = landmarks[33];
+        const rightEye = landmarks[263];
+        const forehead = landmarks[10];
+        const chin = landmarks[152];
+
+        if (!leftEye || !rightEye) return 0;
+
+        // Khoảng cách 2 mắt (normalized) — chỉ số tốt nhất để đo độ gần
+        const eyeDistance = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
+
+        // Chiều cao mặt để bổ sung
+        const faceHeight = forehead && chin ? Math.abs(chin.y - forehead.y) : 0;
+
+        // Kết hợp 2 chỉ số, ưu tiên eyeDistance
+        return Math.max(eyeDistance * 2.8, faceHeight);
+    }
     function drawFaceMesh(landmarks: any[]) {
         const canvas = meshCanvasRef.current;
         const video = videoRef.current;
@@ -314,30 +332,141 @@ export default function FaceVerify({ isOpen, onClose, onSuccess }: FaceVerifyPro
 
         const connections = [
             // Mắt trái
-            [33, 7], [7, 163], [163, 144], [144, 145], [145, 153], [153, 154], [154, 155], [155, 133],
-            [33, 246], [246, 161], [161, 160], [160, 159], [159, 158], [158, 157], [157, 173], [173, 133],
+            [33, 7],
+            [7, 163],
+            [163, 144],
+            [144, 145],
+            [145, 153],
+            [153, 154],
+            [154, 155],
+            [155, 133],
+            [33, 246],
+            [246, 161],
+            [161, 160],
+            [160, 159],
+            [159, 158],
+            [158, 157],
+            [157, 173],
+            [173, 133],
             // Mắt phải
-            [263, 249], [249, 390], [390, 373], [373, 374], [374, 380], [380, 381], [381, 382], [382, 362],
-            [263, 466], [466, 388], [388, 387], [387, 386], [386, 385], [385, 384], [384, 398], [398, 362],
+            [263, 249],
+            [249, 390],
+            [390, 373],
+            [373, 374],
+            [374, 380],
+            [380, 381],
+            [381, 382],
+            [382, 362],
+            [263, 466],
+            [466, 388],
+            [388, 387],
+            [387, 386],
+            [386, 385],
+            [385, 384],
+            [384, 398],
+            [398, 362],
             // Lông mày
-            [70, 63], [63, 105], [105, 66], [66, 107],
-            [336, 296], [296, 334], [334, 293], [293, 300],
+            [70, 63],
+            [63, 105],
+            [105, 66],
+            [66, 107],
+            [336, 296],
+            [296, 334],
+            [334, 293],
+            [293, 300],
             // Mũi
-            [1, 2], [2, 98], [98, 327], [1, 168], [168, 6], [6, 197], [197, 195], [195, 5],
-            [98, 97], [97, 2], [327, 326], [326, 2],
+            [1, 2],
+            [2, 98],
+            [98, 327],
+            [1, 168],
+            [168, 6],
+            [6, 197],
+            [197, 195],
+            [195, 5],
+            [98, 97],
+            [97, 2],
+            [327, 326],
+            [326, 2],
             // Môi ngoài
-            [61, 185], [185, 40], [40, 39], [39, 37], [37, 0], [0, 267], [267, 269], [269, 270], [270, 409], [409, 291],
-            [61, 146], [146, 91], [91, 181], [181, 84], [84, 17], [17, 314], [314, 405], [405, 321], [321, 375], [375, 291],
+            [61, 185],
+            [185, 40],
+            [40, 39],
+            [39, 37],
+            [37, 0],
+            [0, 267],
+            [267, 269],
+            [269, 270],
+            [270, 409],
+            [409, 291],
+            [61, 146],
+            [146, 91],
+            [91, 181],
+            [181, 84],
+            [84, 17],
+            [17, 314],
+            [314, 405],
+            [405, 321],
+            [321, 375],
+            [375, 291],
             // Môi trong
-            [78, 95], [95, 88], [88, 178], [178, 87], [87, 14], [14, 317], [317, 402], [402, 318], [318, 324], [324, 308],
-            [78, 191], [191, 80], [80, 81], [81, 82], [82, 13], [13, 312], [312, 311], [311, 310], [310, 415], [415, 308],
+            [78, 95],
+            [95, 88],
+            [88, 178],
+            [178, 87],
+            [87, 14],
+            [14, 317],
+            [317, 402],
+            [402, 318],
+            [318, 324],
+            [324, 308],
+            [78, 191],
+            [191, 80],
+            [80, 81],
+            [81, 82],
+            [82, 13],
+            [13, 312],
+            [312, 311],
+            [311, 310],
+            [310, 415],
+            [415, 308],
             // Viền mặt (quan trọng để rộng ngang)
-            [10, 338], [338, 297], [297, 332], [332, 284], [284, 251], [251, 389], [389, 356], [356, 454],
-            [454, 323], [323, 361], [361, 288], [288, 397], [397, 365], [365, 379], [379, 378], [378, 400],
-            [400, 377], [377, 152], [152, 148], [148, 176], [176, 149], [149, 150], [150, 136], [136, 172],
-            [172, 58], [58, 132], [132, 93], [93, 234], [234, 127], [127, 162], [162, 21], [21, 54],
-            [54, 103], [103, 67], [67, 109], [109, 10],
-        ];    
+            [10, 338],
+            [338, 297],
+            [297, 332],
+            [332, 284],
+            [284, 251],
+            [251, 389],
+            [389, 356],
+            [356, 454],
+            [454, 323],
+            [323, 361],
+            [361, 288],
+            [288, 397],
+            [397, 365],
+            [365, 379],
+            [379, 378],
+            [378, 400],
+            [400, 377],
+            [377, 152],
+            [152, 148],
+            [148, 176],
+            [176, 149],
+            [149, 150],
+            [150, 136],
+            [136, 172],
+            [172, 58],
+            [58, 132],
+            [132, 93],
+            [93, 234],
+            [234, 127],
+            [127, 162],
+            [162, 21],
+            [21, 54],
+            [54, 103],
+            [103, 67],
+            [67, 109],
+            [109, 10],
+        ];
         ctx.strokeStyle = isActive ? 'rgba(0, 190, 255, 0.4)' : 'rgba(0, 174, 255, 0.25)';
         ctx.lineWidth = (isActive ? 1.25 : 0.95) * sizeScale;
         ctx.lineCap = 'round';
@@ -492,13 +621,22 @@ export default function FaceVerify({ isOpen, onClose, onSuccess }: FaceVerifyPro
 
                 if (!landmarks) {
                     challengeStableSinceRef.current = null;
+                    setIsTooFar(false);
                     clearFaceMesh();
                 } else {
                     drawFaceMesh(landmarks);
                     const nose = landmarks[1];
-                    const insideFrame = nose.x > 0.25 && nose.x < 0.75 && nose.y > 0.2 && nose.y < 0.8;
+                    const faceSize = getFaceSize(landmarks);
 
-                    if (!insideFrame) {
+                    const insideFrame = nose.x > 0.28 && nose.x < 0.72 && nose.y > 0.22 && nose.y < 0.78;
+
+                    // Bắt buộc phải đủ gần
+                    const isCloseEnough = faceSize > 0.52;
+
+                    // Cập nhật trạng thái còn xa
+                    setIsTooFar(insideFrame && !isCloseEnough);
+
+                    if (!insideFrame || !isCloseEnough) {
                         challengeStableSinceRef.current = null;
                     } else {
                         const currentPose = calculateFacePose(landmarks);
@@ -762,7 +900,7 @@ export default function FaceVerify({ isOpen, onClose, onSuccess }: FaceVerifyPro
                                 </span>
                             </div>
                             <div className={styles.direction_pill}>
-                                <span>{challenge.description}</span>
+                                <span>{isTooFar ? 'Đưa khuôn mặt lại gần hơn' : challenge.description}</span>
                             </div>
                         </div>
                     )}

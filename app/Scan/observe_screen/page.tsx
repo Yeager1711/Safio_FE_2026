@@ -477,18 +477,8 @@ const ObserveScreen: React.FC = () => {
             }
         }
         person.fallScore = score;
-        console.log('PERSON', personId, 'ANGLE', history.at(-1)?.angle, 'SCORE', score);
-        if (score >= 70) {
-            triggerFallAlert(personId, pose);
-            triggerFallAlert(personId, pose);
-            person.motionHistory = [];
-        }
 
-        person.fallScore = score;
-        console.log('FALL SCORE', personId, score);
         if (score >= 70) {
-            triggerFallAlert(personId, pose);
-            person.cooldownUntil = Date.now() + COOLDOWN_MS;
             triggerFallAlert(personId, pose);
             person.motionHistory = [];
         }
@@ -496,10 +486,21 @@ const ObserveScreen: React.FC = () => {
 
     const triggerFallAlert = async (personId: number, pose: any) => {
         const person = personsRef.current.get(personId);
+
         if (!person) return;
-        person.cooldownUntil = Date.now() + COOLDOWN_MS;
+
+        const now = Date.now();
+
+        if (now < person.cooldownUntil) {
+            return;
+        }
+
+        person.cooldownUntil = now + COOLDOWN_MS;
         setAlertActive(true);
-        setTimeout(() => setAlertActive(false), 3000);
+
+        setTimeout(() => {
+            setAlertActive(false);
+        }, 3000);
 
         const fallType = 'Ngã';
         const behavior = 'Té ngã phát hiện';
@@ -652,152 +653,287 @@ const ObserveScreen: React.FC = () => {
     return (
         <div className={styles.observeScreen}>
             <header className={styles.header}>
-                <h3>Hệ thống AI giám sát</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div className={styles.controls}>
-                        <button
-                            className={activeCam?.isActive ? styles.stopBtn : styles.startBtn}
-                            onClick={() => {
-                                if (!activeCam) return;
-                                activeCam.isActive ? stopCamera(activeCam.id) : startCamera(activeCam.id);
-                            }}
-                            disabled={isLoading}
-                        >
-                            <FontAwesomeIcon icon={activeCam?.isActive ? faVideoSlash : faVideo} />{' '}
-                            {activeCam?.isActive ? 'Dừng giám sát' : 'Bắt đầu giám sát'}
-                        </button>
+                <div className={styles.identity}>
+                    <div className={styles.logoMark}>
+                        <img src="/images/logo_safio.png" alt="Safio" />
                     </div>
-                    <div className={`${styles.status} ${activeCam?.isActive ? styles.active : styles.inactive}`}>
-                        <FontAwesomeIcon icon={faCircle} className={styles.statusIcon} />{' '}
-                        {activeCam?.isActive ? 'Đang giám sát' : 'Đã dừng'}
+
+                    <div className={styles.identityText}>
+                        <strong>SAFIO</strong>
+                        <span>AI Intelligence Console</span>
                     </div>
+                </div>
+
+                <div className={styles.headerCenter}>
+                    <span className={styles.headerLabel}>SECURITY MONITORING</span>
+                    <strong>{activeCam?.name || 'Camera'}</strong>
+                </div>
+
+                <div className={styles.headerRight}>
+                    <div className={`${styles.systemStatus} ${activeCam?.isActive ? styles.online : styles.offline}`}>
+                        <span></span>
+
+                        <div>
+                            <strong>{activeCam?.isActive ? 'System Online' : 'System Offline'}</strong>
+
+                            <small>{activeCam?.isActive ? 'AI monitoring active' : 'Monitoring paused'}</small>
+                        </div>
+                    </div>
+
+                    <button
+                        className={`${styles.monitorButton} ${activeCam?.isActive ? styles.stop : styles.start}`}
+                        onClick={() => {
+                            if (!activeCam) return;
+
+                            activeCam.isActive ? stopCamera(activeCam.id) : startCamera(activeCam.id);
+                        }}
+                        disabled={isLoading}
+                    >
+                        <FontAwesomeIcon icon={activeCam?.isActive ? faVideoSlash : faVideo} />
+
+                        <span>{activeCam?.isActive ? 'Dừng giám sát' : 'Bắt đầu giám sát'}</span>
+                    </button>
                 </div>
             </header>
 
-            <main className={styles.mainGrid}>
-                <section className={styles.cameraSection}>
-                    <div className={styles.videoContainer}>
-                        <div className={styles.camSelector}>
-                            {cams.map((cam) => (
-                                <button
-                                    key={cam.id}
-                                    onClick={() => setActiveCamId(cam.id)}
-                                    className={cam.id === activeCamId ? styles.activeCam : ''}
-                                >
-                                    {cam.name}
-                                </button>
-                            ))}
+            <main className={styles.workspace}>
+                <div className={styles.cameraArea}>
+                    <div className={styles.cameraStage}>
+                        <video ref={videoRef} autoPlay muted playsInline />
+
+                        <canvas ref={overlayRef} />
+
+                        <div className={styles.cameraTop}>
+                            <div className={styles.cameraSelector}>
+                                {cams.map((cam) => (
+                                    <button
+                                        key={cam.id}
+                                        onClick={() => setActiveCamId(cam.id)}
+                                        className={cam.id === activeCamId ? styles.selected : ''}
+                                    >
+                                        <span></span>
+                                        {cam.name}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className={styles.cameraInfo}>
+                                <span>1080P</span>
+                                <span>30 FPS</span>
+
+                                <div>
+                                    <i></i>
+                                    AI
+                                </div>
+                            </div>
                         </div>
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            muted
-                            playsInline
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'contain',
-                            }}
-                        />
-                        <canvas
-                            ref={overlayRef}
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                pointerEvents: 'none',
-                            }}
-                        />
-                        {alertActive && <div className={styles.alertBanner}>Phát hiện té ngã!</div>}
+
                         {isLoading && (
-                            <div className={styles.loadingOverlay}>
-                                <div className={styles.loader}></div>
-                                <p>Đang khởi động camera...</p>
+                            <div className={styles.cameraLoading}>
+                                <div className={styles.loadingRing}></div>
+
+                                <strong>Initializing camera</strong>
+
+                                <span>Đang kết nối tới hệ thống giám sát</span>
                             </div>
                         )}
 
-                        <div className={styles.active_logs}>
+                        {alertActive && (
+                            <div className={styles.fallAlert}>
+                                <div className={styles.fallAlertIcon}>!</div>
+
+                                <div>
+                                    <span>ATTENTION</span>
+                                    <strong>Phát hiện té ngã</strong>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={styles.detectionStack}>
                             {cams
                                 .flatMap((c) => c.events.slice(0, 3))
                                 .map((e, idx) => (
                                     <div
                                         key={e.id}
-                                        className={styles.active_logs__item}
-                                        style={{ animationDelay: `${idx * 0.1}s` }}
+                                        className={styles.detection}
+                                        style={{
+                                            animationDelay: `${idx * 0.08}s`,
+                                        }}
                                     >
-                                        <div className={styles.logo}>
-                                            <img src="/images/logo_safio.png" alt="Logo" />
-                                        </div>
-                                        <div className={styles.logs}>
-                                            <h3>Phát hiện người {e.personId}</h3>
-                                            <span>{e.timestamp}</span>
+                                        <div className={styles.detectionAccent}></div>
+
+                                        <div className={styles.detectionContent}>
+                                            <div className={styles.detectionHeader}>
+                                                <span>DETECTED</span>
+
+                                                <small>{e.timestamp}</small>
+                                            </div>
+
+                                            <strong>Phát hiện người</strong>
+
+                                            <p>Person #{e.personId}</p>
+
+                                            <div className={styles.detectionFooter}>
+                                                <span>{e.camName}</span>
+
+                                                <i></i>
+
+                                                <span>AI Vision</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                         </div>
+
+                        <div className={styles.cameraBottom}>
+                            <div className={styles.cameraBottomLeft}>
+                                <div>
+                                    <span>CAMERA</span>
+                                    <strong>{activeCam?.name || '--'}</strong>
+                                </div>
+
+                                <div className={styles.separator}></div>
+
+                                <div>
+                                    <span>MODE</span>
+                                    <strong>{activeCam?.isActive ? 'MONITORING' : 'STANDBY'}</strong>
+                                </div>
+
+                                <div className={styles.separator}></div>
+
+                                <div>
+                                    <span>AI ENGINE</span>
+                                    <strong>{activeCam?.isActive ? 'ACTIVE' : 'IDLE'}</strong>
+                                </div>
+                            </div>
+
+                            <div className={styles.recording}>
+                                <span></span>
+                                LIVE
+                            </div>
+                        </div>
                     </div>
 
-                    {error && <p className={styles.error}>{error}</p>}
-                </section>
+                    {error && <div className={styles.error}>{error}</div>}
+                </div>
 
-                <aside className={styles.historySection}>
-                    <h2>Lịch sử phát hiện</h2>
+                <aside className={styles.activityPanel}>
+                    <div className={styles.activityHeader}>
+                        <div>
+                            <span>REALTIME EVENTS</span>
+                            <h2>Activity</h2>
+                        </div>
+
+                        <div className={styles.activityCount}>
+                            {cams.flatMap((c) => c.events).filter((e) => e.action !== 'Phát hiện người mới').length}
+                        </div>
+                    </div>
+
                     {cams.every((c) => c.events.length === 0) ? (
-                        <p className={styles.noEvents}>Chưa có dữ liệu.</p>
+                        <div className={styles.emptyActivity}>
+                            <div className={styles.emptyIcon}>
+                                <FontAwesomeIcon icon={faVideo} />
+                            </div>
+
+                            <strong>No activity yet</strong>
+
+                            <span>Các sự kiện AI sẽ xuất hiện tại đây khi hệ thống bắt đầu giám sát.</span>
+                        </div>
                     ) : (
-                        <div className={styles.eventList}>
+                        <div className={styles.activityList}>
                             {cams
                                 .flatMap((c) => c.events)
                                 .filter((e) => e.action !== 'Phát hiện người mới')
                                 .sort((a, b) => b.id - a.id)
                                 .map((e) => (
-                                    <div key={e.id} className={styles.eventItem}>
-                                        <div
-                                            className={styles.eventHeader}
+                                    <div
+                                        key={e.id}
+                                        className={`${styles.activityItem} ${
+                                            expandedEvent === e.id ? styles.open : ''
+                                        }`}
+                                    >
+                                        <button
+                                            className={styles.activitySummary}
                                             onClick={() => setExpandedEvent(e.id === expandedEvent ? null : e.id)}
                                         >
-                                            <p className={styles.box_camName}>
-                                                <strong>{e.camName}</strong> — {e.timestamp}
-                                            </p>
-                                            <span className={styles.icon_showView}>
-                                                {expandedEvent === e.id ? (
-                                                    <FontAwesomeIcon icon={faChevronUp} />
-                                                ) : (
-                                                    <FontAwesomeIcon icon={faChevronDown} />
-                                                )}
-                                            </span>
-                                        </div>
+                                            <div className={styles.activityMarker}>
+                                                <span></span>
+                                            </div>
+
+                                            <div className={styles.activityMain}>
+                                                <div>
+                                                    <strong>{e.action}</strong>
+
+                                                    <time>{e.timestamp}</time>
+                                                </div>
+
+                                                <p>{e.camName}</p>
+
+                                                <small>Person #{e.personId}</small>
+                                            </div>
+
+                                            <div className={styles.expandIcon}>
+                                                <FontAwesomeIcon
+                                                    icon={expandedEvent === e.id ? faChevronUp : faChevronDown}
+                                                />
+                                            </div>
+                                        </button>
 
                                         {expandedEvent === e.id && (
-                                            <div className={styles.eventDetails}>
-                                                <p>
-                                                    <strong>Loại:</strong> {e.action}
-                                                </p>
-                                                {e.fallType && (
-                                                    <p>
-                                                        <strong>Loại té ngã:</strong> {e.fallType}
-                                                    </p>
-                                                )}
-                                                {e.behavior && (
-                                                    <p>
-                                                        <strong>Hành vi:</strong> {e.behavior}
-                                                    </p>
-                                                )}
+                                            <div className={styles.activityDetails}>
+                                                <div className={styles.detailsGrid}>
+                                                    <div>
+                                                        <span>TYPE</span>
+                                                        <strong>{e.action}</strong>
+                                                    </div>
+
+                                                    {e.fallType && (
+                                                        <div>
+                                                            <span>FALL TYPE</span>
+                                                            <strong>{e.fallType}</strong>
+                                                        </div>
+                                                    )}
+
+                                                    {e.behavior && (
+                                                        <div>
+                                                            <span>BEHAVIOR</span>
+                                                            <strong>{e.behavior}</strong>
+                                                        </div>
+                                                    )}
+
+                                                    <div>
+                                                        <span>PERSON</span>
+                                                        <strong>#{e.personId}</strong>
+                                                    </div>
+                                                </div>
+
                                                 {e.snapshot && (
-                                                    <div className={styles.box_image__Detect_Behavior}>
-                                                        <img src={e.snapshot} alt="snapshot" />
-                                                        <button
-                                                            onClick={() => {
-                                                                const link = document.createElement('a');
-                                                                link.href = e.snapshot!;
-                                                                link.download = `fall_${e.personId}_${e.timestamp}.png`;
-                                                                link.click();
-                                                            }}
-                                                        >
-                                                            <FontAwesomeIcon icon={faDownload} /> Tải xuống
-                                                        </button>
+                                                    <div className={styles.snapshot}>
+                                                        <div className={styles.snapshotTop}>
+                                                            <div>
+                                                                <span>AI SNAPSHOT</span>
+
+                                                                <strong>Detection frame</strong>
+                                                            </div>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    const link = document.createElement('a');
+
+                                                                    link.href = e.snapshot!;
+
+                                                                    link.download = `fall_${e.personId}_${e.timestamp}.png`;
+
+                                                                    link.click();
+                                                                }}
+                                                            >
+                                                                <FontAwesomeIcon icon={faDownload} />
+
+                                                                <span>Download</span>
+                                                            </button>
+                                                        </div>
+
+                                                        <img src={e.snapshot} alt="Detection snapshot" />
                                                     </div>
                                                 )}
                                             </div>

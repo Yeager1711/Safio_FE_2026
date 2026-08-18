@@ -1,224 +1,585 @@
 .observeScreen {
     min-height: 100vh;
-    background: #fff;
-    color: #e2e8f0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1.6rem;
     display: flex;
     flex-direction: column;
-    padding: 1.5rem 2rem;
-    font-family: 'Inter', sans-serif;
-    backdrop-filter: blur(12px);
+    gap: 1.4rem;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        sans-serif;
 
     .header {
+        width: 100%;
+        min-height: 6.4rem;
+        box-sizing: border-box;
+        padding: 0 1.4rem;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        max-width: 180rem;
-        width: 95%;
-        margin: 0 auto 1.5rem auto;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 1.5rem;
-        padding: 1rem 2rem;
-        box-shadow: 0 4px 25px rgba(0, 150, 255, 0.08);
+        justify-content: space-between;
+        gap: 2rem;
+        background: #ffffff;
+        border: 0.1rem solid #e6e6e8;
+        border-radius: 1.4rem;
 
-        h3 {
-            font-size: 1.6rem;
-            font-weight: 550;
-            background: linear-gradient(90deg, #38bdf8, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 0.5px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 1rem;
-
-            button {
-                border: none;
-                padding: 0.8rem 2rem;
-                font-size: 1.1rem;
-                font-weight: 500;
-                border-radius: 1rem;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                transition: all 0.3s ease;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .startBtn {
-                background: linear-gradient(135deg, rgba(0, 136, 255, 0.6), rgba(56, 189, 248, 0.4));
-                color: #fff;
-                box-shadow: 0 4px 20px rgba(0, 136, 255, 0.25);
-
-                &:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 6px 25px rgba(56, 189, 248, 0.45);
-                }
-            }
-
-            .stopBtn {
-                background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(220, 38, 38, 0.4));
-                color: #fff;
-                box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
-
-                &:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.45);
-                }
-            }
-        }
-
-        .status {
+        .identity {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            font-size: 1.1rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.7rem 1.2rem;
-            border-radius: 1rem;
-            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+            gap: 1rem;
 
-            .statusIcon {
-                font-size: 0.8rem;
-            }
-        }
-
-        .active {
-            background: #22c55e;
-            animation: pulse 1.5s infinite;
-        }
-
-        .inactive {
-            background: #f87171;
-        }
-    }
-
-    @keyframes pulse {
-
-        0%,
-        100% {
-            opacity: 0.6;
-        }
-
-        50% {
-            opacity: 1;
-        }
-    }
-
-    .mainGrid {
-        display: grid;
-        grid-template-columns: 3fr 1fr;
-        gap: 2rem;
-        margin: 0 auto;
-        max-width: 180rem;
-        width: 95%;
-        padding: 1.5rem;
-        border-radius: 2rem;
-        backdrop-filter: blur(25px);
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 0 30px rgba(0, 136, 255, 0.08);
-
-        @media (max-width: 900px) {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .cameraSection {
-        border-radius: 3rem;
-        padding: 0;
-        position: relative;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 8px 30px rgba(0, 136, 255, 0.1);
-        backdrop-filter: blur(15px);
-
-
-
-        .videoContainer {
-            position: relative;
-            border-radius: 3rem;
-            overflow: hidden;
-            aspect-ratio: 16 / 9;
-            background: rgba(17, 25, 40, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-
-
-            .camSelector {
-                position: absolute;
-                top: 0;
-                left: 0;
+            .logoMark {
+                width: 4.2rem;
+                height: 4.2rem;
                 display: flex;
                 align-items: center;
-                gap: 1.5rem;
-                background: #fff;
-                border-radius: 2rem 0 3rem 0;
-
-                button {
-                    color: #333;
-                    font-size: 1.3rem;
-                    padding: .7rem 1.5rem;
-                }
-            }
-
-            video,
-            canvas {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            .alertBanner {
-                position: absolute;
-                bottom: 10%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(239, 68, 68, 0.85);
-                padding: 0.8rem 2rem;
+                justify-content: center;
+                overflow: hidden;
                 border-radius: 1rem;
-                font-size: 1.4rem;
-                font-weight: 600;
-                color: #fff;
-                animation: alertBlink 1s ease-in-out infinite;
-                box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-                backdrop-filter: blur(8px);
-            }
+                background: #000000;
 
-            @keyframes alertBlink {
-
-                0%,
-                100% {
-                    opacity: 1;
-                }
-
-                50% {
-                    opacity: 0.3;
+                img {
+                    width: 80%;
+                    height: 80%;
+                    object-fit: contain;
                 }
             }
 
-            .loadingOverlay {
-                position: absolute;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.55);
+            .identityText {
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                backdrop-filter: blur(12px);
+                gap: 0.2rem;
 
-                .loader {
-                    width: 3rem;
-                    height: 3rem;
-                    border: 4px solid rgba(59, 130, 246, 0.6);
-                    border-top: 4px solid transparent;
+                strong {
+                    font-size: 1.5rem;
+                    line-height: 1;
+                    font-weight: 700;
+                    letter-spacing: -0.04em;
+                }
+
+                span {
+                    color: #86868b;
+                    font-size: 1.25rem;
+                    font-weight: 450;
+                }
+            }
+        }
+
+        .headerCenter {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+
+            .headerLabel {
+                color: #86868b;
+                font-size: 1.15rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+            }
+
+            strong {
+                color: #1d1d1f;
+                font-size: 1.35rem;
+                font-weight: 600;
+            }
+        }
+
+        .headerRight {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .systemStatus {
+                display: flex;
+                align-items: center;
+                gap: 0.65rem;
+
+                >span {
+                    width: 0.7rem;
+                    height: 0.7rem;
                     border-radius: 50%;
-                    animation: spin 1s linear infinite;
+                }
+
+                div {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.15rem;
+
+                    strong {
+                        font-size: 1.25rem;
+                        font-weight: 600;
+                    }
+
+                    small {
+                        color: #86868b;
+                        font-size: 1.1rem;
+                    }
+                }
+            }
+
+            .online {
+                >span {
+                    background: #34c759;
+                }
+
+                strong {
+                    color: #1d1d1f;
+                }
+            }
+
+            .offline {
+                >span {
+                    background: #a1a1a6;
+                }
+
+                strong {
+                    color: #86868b;
+                }
+            }
+
+            .monitorButton {
+                height: 4.2rem;
+                padding: 0 1.25rem;
+                display: flex;
+                align-items: center;
+                gap: 0.65rem;
+                border: 0;
+                border-radius: 1rem;
+                font-family: inherit;
+                font-size: 1.3rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition:
+                    transform 0.2s ease,
+                    background 0.2s ease;
+
+                &:hover {
+                    transform: translateY(-0.1rem);
+                }
+
+                &:active {
+                    transform: scale(0.98);
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+            }
+
+            .start {
+                color: #ffffff;
+                background: #0071e3;
+
+                &:hover {
+                    background: #0077ed;
+                }
+            }
+
+            .stop {
+                color: #ffffff;
+                background: #ff3b30;
+
+                &:hover {
+                    background: #ff453a;
+                }
+            }
+        }
+    }
+
+    .workspace {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 34rem;
+        gap: 1.4rem;
+
+        .cameraArea {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+
+            .cameraStage {
+                position: relative;
+                width: 100%;
+                min-height: 0;
+                aspect-ratio: 16 / 9;
+                overflow: hidden;
+                background: #101010;
+                border-radius: 1.4rem;
+                box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.12);
+
+                video,
+                canvas {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .cameraTop {
+                    position: absolute;
+                    top: 1.2rem;
+                    left: 1.2rem;
+                    right: 1.2rem;
+                    z-index: 10;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+
+                    .cameraSelector {
+                        display: flex;
+                        gap: 0.2rem;
+                        padding: 0.3rem;
+                        background: rgba(20, 20, 22, 0.78);
+                        border: 0.1rem solid rgba(255, 255, 255, 0.1);
+                        border-radius: 0.9rem;
+                        backdrop-filter: blur(20px);
+
+                        button {
+                            height: 3.5rem;
+                            padding: 0 1rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.55rem;
+                            border: 0;
+                            border-radius: 0.65rem;
+                            color: rgba(255, 255, 255, 0.65);
+                            background: transparent;
+                            font-family: inherit;
+                            font-size: 1.25rem;
+                            font-weight: 550;
+                            cursor: pointer;
+
+                            span {
+                                width: 0.65rem;
+                                height: 0.65rem;
+                                border-radius: 50%;
+                                background: #8e8e93;
+                            }
+
+                            &:hover {
+                                color: #ffffff;
+                                background: rgba(255, 255, 255, 0.08);
+                            }
+                        }
+
+                        .selected {
+                            color: #ffffff;
+                            background: rgba(255, 255, 255, 0.14);
+
+                            span {
+                                background: #34c759;
+                            }
+                        }
+                    }
+
+                    .cameraInfo {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+
+                        >span,
+                        >div {
+                            height: 3.5rem;
+                            padding: 0 0.8rem;
+                            box-sizing: border-box;
+                            display: flex;
+                            align-items: center;
+                            border-radius: 0.7rem;
+                            color: rgba(255, 255, 255, 0.8);
+                            background: rgba(20, 20, 22, 0.78);
+                            border: 0.1rem solid rgba(255, 255, 255, 0.1);
+                            font-size: 1.15rem;
+                            font-weight: 600;
+                            backdrop-filter: blur(20px);
+                        }
+
+                        >div {
+                            gap: 0.45rem;
+
+                            i {
+                                width: 0.6rem;
+                                height: 0.6rem;
+                                border-radius: 50%;
+                                background: #34c759;
+                            }
+                        }
+                    }
+                }
+
+                .detectionStack {
+                    position: absolute;
+                    top: 6.2rem;
+                    right: 1.2rem;
+                    z-index: 12;
+                    width: 31rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.65rem;
+                    pointer-events: none;
+
+                    .detection {
+                        position: relative;
+                        display: flex;
+                        overflow: hidden;
+                        background: rgba(20, 20, 22, 0.82);
+                        border: 0.1rem solid rgba(255, 255, 255, 0.13);
+                        border-radius: 1rem;
+                        box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.2);
+                        backdrop-filter: blur(24px);
+                        animation: detectionIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+
+                        .detectionAccent {
+                            width: 0.3rem;
+                            flex: 0 0 0.3rem;
+                            background: #34c759;
+                        }
+
+                        .detectionContent {
+                            flex: 1;
+                            padding: 0.95rem 1rem;
+
+                            .detectionHeader {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 1rem;
+                                margin-bottom: 0.45rem;
+
+                                span {
+                                    color: #34c759;
+                                    font-size: 1.05rem;
+                                    font-weight: 650;
+                                    letter-spacing: 0.08em;
+                                }
+
+                                small {
+                                    color: rgba(255, 255, 255, 0.42);
+                                    font-size: 1.1rem;
+                                }
+                            }
+
+                            >strong {
+                                display: block;
+                                color: #ffffff;
+                                font-size: 1.35rem;
+                                font-weight: 600;
+                            }
+
+                            >p {
+                                margin: 0.25rem 0 0.75rem;
+                                color: rgba(255, 255, 255, 0.55);
+                                font-size: 1.25rem;
+                            }
+
+                            .detectionFooter {
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                                color: rgba(255, 255, 255, 0.38);
+                                font-size: 1.1rem;
+
+                                i {
+                                    width: 0.3rem;
+                                    height: 0.3rem;
+                                    border-radius: 50%;
+                                    background: #68686d;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .fallAlert {
+                    position: absolute;
+                    right: 1.2rem;
+                    bottom: 6.5rem;
+                    z-index: 20;
+                    min-width: 27rem;
+                    padding: 1rem;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.8rem;
+                    background: rgba(255, 59, 48, 0.92);
+                    border-radius: 1rem;
+                    color: #ffffff;
+                    box-shadow: 0 1rem 3rem rgba(255, 59, 48, 0.2);
+                    animation: fallAlert 1.4s ease-in-out infinite;
+
+                    .fallAlertIcon {
+                        width: 3.4rem;
+                        height: 3.4rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 0.8rem;
+                        background: rgba(255, 255, 255, 0.16);
+                        font-size: 1.6rem;
+                        font-weight: 700;
+                    }
+
+                    div:last-child {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.15rem;
+
+                        span {
+                            font-size: 1rem;
+                            font-weight: 650;
+                            letter-spacing: 0.1em;
+                        }
+
+                        strong {
+                            font-size: 1.4rem;
+                            font-weight: 600;
+                        }
+                    }
+                }
+
+                .cameraLoading {
+                    position: absolute;
+                    inset: 0;
+                    z-index: 50;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(10, 10, 10, 0.86);
+                    backdrop-filter: blur(15px);
+
+                    .loadingRing {
+                        width: 4rem;
+                        height: 4rem;
+                        margin-bottom: 1.2rem;
+                        border: 0.3rem solid rgba(255, 255, 255, 0.18);
+                        border-top-color: #ffffff;
+                        border-radius: 50%;
+                        animation: spin 0.8s linear infinite;
+                    }
+
+                    strong {
+                        color: #ffffff;
+                        font-size: 1.4rem;
+                        font-weight: 600;
+                    }
+
+                    span {
+                        margin-top: 0.35rem;
+                        color: rgba(255, 255, 255, 0.45);
+                        font-size: 1.25rem;
+                    }
+                }
+
+                .cameraBottom {
+                    position: absolute;
+                    left: 1.2rem;
+                    right: 1.2rem;
+                    bottom: 1.2rem;
+                    z-index: 10;
+                    min-height: 5rem;
+                    padding: 0 1rem;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    background: rgba(20, 20, 22, 0.78);
+                    border: 0.1rem solid rgba(255, 255, 255, 0.1);
+                    border-radius: 1rem;
+                    backdrop-filter: blur(20px);
+
+                    .cameraBottomLeft {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+
+                        >div:not(.separator) {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.45rem;
+
+                            span {
+                                color: rgba(255, 255, 255, 0.38);
+                                font-size: 1rem;
+                                font-weight: 650;
+                                letter-spacing: 0.05em;
+                            }
+
+                            strong {
+                                color: rgba(255, 255, 255, 0.85);
+                                font-size: 1.15rem;
+                                font-weight: 550;
+                            }
+                        }
+
+                        .separator {
+                            width: 0.1rem;
+                            height: 2rem;
+                            background: rgba(255, 255, 255, 0.12);
+                        }
+                    }
+
+                    .recording {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        color: rgba(255, 255, 255, 0.7);
+                        font-size: 1.1rem;
+                        font-weight: 650;
+
+                        span {
+                            width: 0.65rem;
+                            height: 0.65rem;
+                            border-radius: 50%;
+                            background: #ff3b30;
+                            animation: livePulse 1.5s ease-in-out infinite;
+                        }
+                    }
+                }
+
+                @keyframes detectionIn {
+                    from {
+                        opacity: 0;
+                        transform: translateX(2rem) scale(0.97);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateX(0) scale(1);
+                    }
+                }
+
+                @keyframes fallAlert {
+
+                    0%,
+                    100% {
+                        transform: translateY(0);
+                    }
+
+                    50% {
+                        transform: translateY(-0.2rem);
+                    }
+                }
+
+                @keyframes livePulse {
+
+                    0%,
+                    100% {
+                        opacity: 1;
+                    }
+
+                    50% {
+                        opacity: 0.35;
+                    }
                 }
 
                 @keyframes spin {
@@ -228,157 +589,383 @@
                 }
             }
 
-            .active_logs {
-                position: absolute;
-                top: 1.5rem;
-                left: 1.5rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.8rem;
-                z-index: 5;
-
-                .active_logs__item {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                    background: rgba(255, 255, 255, 0.12);
-                    backdrop-filter: blur(12px);
-                    padding: 0.9rem 1.4rem;
-                    border-radius: 1.6rem;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    animation: slideInLeft 0.5s ease-out;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-                    min-width: 260px;
-
-                    .logo {
-                        width: 40px;
-                        height: 40px;
-
-                        img {
-                            width: 100%;
-                            height: 100%;
-                            object-fit: contain;
-                            border-radius: 0.6rem;
-                        }
-                    }
-
-                    .logs {
-                        h3 {
-                            margin: 0;
-                            font-size: 1.1rem;
-                            font-weight: 600;
-                            color: #93c5fd;
-                        }
-
-                        span {
-                            font-size: 0.9rem;
-                            color: #bac8ff;
-                        }
-                    }
-                }
+            .error {
+                padding: 0.8rem 1rem;
+                border-radius: 0.8rem;
+                color: #ff3b30;
+                background: #fff2f1;
+                font-size: 1.3rem;
+                text-align: center;
             }
-
-            @keyframes slideInLeft {
-                from {
-                    transform: translateX(-100%);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-
         }
 
-        .error {
-            text-align: center;
-            color: #ef4444;
-            margin-top: 0.5rem;
+        .activityPanel {
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border: 0.1rem solid #e6e6e8;
+            border-radius: 1.4rem;
+
+            .activityHeader {
+                min-height: 7.2rem;
+                padding: 1.2rem 1.3rem;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 0.1rem solid #ededed;
+
+                >div:first-child {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.2rem;
+
+                    >span {
+                        color: #86868b;
+                        font-size: 1rem;
+                        font-weight: 650;
+                        letter-spacing: 0.1em;
+                    }
+
+                    h2 {
+                        margin: 0;
+                        font-size: 1.65rem;
+                        font-weight: 650;
+                        letter-spacing: -0.03em;
+                    }
+                }
+
+                .activityCount {
+                    min-width: 3.3rem;
+                    height: 3.3rem;
+                    padding: 0 0.7rem;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 0.8rem;
+                    color: #0071e3;
+                    background: #f0f7ff;
+                    font-size: 1.25rem;
+                    font-weight: 650;
+                }
+            }
+
+            .activityList {
+                min-height: 0;
+                flex: 1;
+                overflow-y: auto;
+
+                &::-webkit-scrollbar {
+                    width: 0.4rem;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                    background: #d2d2d7;
+                    border-radius: 1rem;
+                }
+
+                .activityItem {
+                    border-bottom: 0.1rem solid #ededed;
+
+                    .activitySummary {
+                        width: 100%;
+                        padding: 1.2rem 1.1rem;
+                        box-sizing: border-box;
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 0.8rem;
+                        border: 0;
+                        background: transparent;
+                        text-align: left;
+                        font-family: inherit;
+                        cursor: pointer;
+
+                        &:hover {
+                            background: #fafafa;
+                        }
+
+                        .activityMarker {
+                            width: 2rem;
+                            flex: 0 0 2rem;
+                            display: flex;
+                            justify-content: center;
+                            padding-top: 0.4rem;
+
+                            span {
+                                width: 0.8rem;
+                                height: 0.8rem;
+                                border-radius: 50%;
+                                background: #0071e3;
+                                box-shadow: 0 0 0 0.35rem #eef6ff;
+                            }
+                        }
+
+                        .activityMain {
+                            min-width: 0;
+                            flex: 1;
+
+                            >div {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 0.5rem;
+
+                                strong {
+                                    overflow: hidden;
+                                    color: #1d1d1f;
+                                    font-size: 1.3rem;
+                                    font-weight: 600;
+                                    white-space: nowrap;
+                                    text-overflow: ellipsis;
+                                }
+
+                                time {
+                                    color: #86868b;
+                                    font-size: 1.1rem;
+                                    white-space: nowrap;
+                                }
+                            }
+
+                            p {
+                                margin: 0.3rem 0;
+                                color: #6e6e73;
+                                font-size: 1.25rem;
+                            }
+
+                            small {
+                                color: #86868b;
+                                font-size: 1.1rem;
+                            }
+                        }
+
+                        .expandIcon {
+                            width: 2.8rem;
+                            height: 2.8rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 0.7rem;
+                            color: #86868b;
+                            font-size: 1rem;
+                        }
+                    }
+
+                    .activityDetails {
+                        padding: 0 1.1rem 1.1rem 4rem;
+
+                        .detailsGrid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 0.5rem;
+
+                            >div {
+                                padding: 0.75rem;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.25rem;
+                                background: #f5f5f7;
+                                border-radius: 0.7rem;
+
+                                span {
+                                    color: #86868b;
+                                    font-size: 1rem;
+                                    font-weight: 600;
+                                }
+
+                                strong {
+                                    overflow: hidden;
+                                    color: #1d1d1f;
+                                    font-size: 1.2rem;
+                                    font-weight: 550;
+                                    white-space: nowrap;
+                                    text-overflow: ellipsis;
+                                }
+                            }
+                        }
+
+                        .snapshot {
+                            margin-top: 0.7rem;
+                            overflow: hidden;
+                            border: 0.1rem solid #e6e6e8;
+                            border-radius: 0.9rem;
+
+                            .snapshotTop {
+                                min-height: 4.8rem;
+                                padding: 0.7rem;
+                                box-sizing: border-box;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 0.5rem;
+                                border-bottom: 0.1rem solid #e6e6e8;
+
+                                >div {
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 0.15rem;
+
+                                    span {
+                                        color: #86868b;
+                                        font-size: 0.95rem;
+                                        font-weight: 650;
+                                    }
+
+                                    strong {
+                                        font-size: 1.15rem;
+                                        font-weight: 600;
+                                    }
+                                }
+
+                                button {
+                                    height: 3.2rem;
+                                    padding: 0 0.75rem;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.4rem;
+                                    border: 0;
+                                    border-radius: 0.7rem;
+                                    color: #0071e3;
+                                    background: #f0f7ff;
+                                    font-family: inherit;
+                                    font-size: 1.1rem;
+                                    font-weight: 550;
+                                    cursor: pointer;
+                                }
+                            }
+
+                            img {
+                                display: block;
+                                width: 100%;
+                                max-height: 24rem;
+                                object-fit: cover;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .emptyActivity {
+                flex: 1;
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+
+                .emptyIcon {
+                    width: 5rem;
+                    height: 5rem;
+                    margin-bottom: 1rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 1.2rem;
+                    color: #86868b;
+                    background: #f5f5f7;
+                    font-size: 1.5rem;
+                }
+
+                strong {
+                    font-size: 1.35rem;
+                    font-weight: 600;
+                }
+
+                span {
+                    max-width: 24rem;
+                    margin-top: 0.4rem;
+                    color: #86868b;
+                    font-size: 1.2rem;
+                    line-height: 1.5;
+                }
+            }
         }
     }
 
-    .historySection {
-        border-radius: 1.5rem;
-        padding: 1.5rem;
-        overflow-y: auto;
-        max-height: 80vh;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 4px 25px rgba(0, 150, 255, 0.08);
-        backdrop-filter: blur(20px);
-
-        h2 {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            color: #60a5fa;
+    @media (max-width: 1200px) {
+        .header {
+            .headerCenter {
+                display: none;
+            }
         }
 
-        .eventList {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        .workspace {
+            grid-template-columns: minmax(0, 1fr) 30rem;
+        }
+    }
 
-            .eventItem {
-                background: rgba(255, 255, 255, 0.08);
-                border-radius: 1.5rem;
-                padding: 1rem;
-                color: #333;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                transition: all 0.3s ease;
-                cursor: pointer;
-                border: .1rem solid #f2f0f0;
+    @media (max-width: 900px) {
+        padding: 1rem;
 
-                &:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 10px 25px rgba(0, 136, 255, 0.15);
+        .header {
+            min-height: auto;
+            padding: 1rem;
+            flex-wrap: wrap;
+
+            .headerRight {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        .workspace {
+            grid-template-columns: 1fr;
+
+            .activityPanel {
+                height: 45rem;
+            }
+        }
+    }
+
+    @media (max-width: 600px) {
+        .header {
+            .headerRight {
+                .systemStatus {
+                    display: none;
                 }
 
-                .eventHeader {
+                .monitorButton {
+                    flex: 1;
+                    justify-content: center;
+                }
+            }
+        }
 
-
-                    .box_camName {
-                        font-size: 1.3rem;
+        .workspace {
+            .cameraArea {
+                .cameraStage {
+                    .cameraTop {
+                        .cameraInfo {
+                            >span {
+                                display: none;
+                            }
+                        }
                     }
-                }
 
-                .eventDetails p {
-                    font-size: 1.3rem;
-                }
-
-                .box_image__Detect_Behavior {
-                    position: relative;
-
-                    img {
-                        max-width: 55rem;
-                        width: 100%;
-                        border-radius: 1rem;
-                        margin-top: 1rem;
-                        object-fit: cover;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
+                    .detectionStack {
+                        width: 26rem;
+                        max-width: calc(100% - 2.4rem);
                     }
 
-                    button {
-                        position: absolute;
-                        top: 1rem;
-                        right: 0.5rem;
-                        background: linear-gradient(135deg, #3b82f6, #38bdf8);
-                        border: none;
-                        color: #fff;
-                        border-radius: 0.7rem;
-                        padding: 0.6rem 1.5rem;
-                        font-size: 1.3rem;
-                        cursor: pointer;
-                        transition: 0.3s;
+                    .cameraBottom {
+                        .cameraBottomLeft {
+                            >div:not(.separator) {
 
-                        &:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.35);
+                                &:nth-of-type(2),
+                                &:nth-of-type(3) {
+                                    display: none;
+                                }
+                            }
                         }
                     }
                 }
+            }
+
+            .activityPanel {
+                height: 40rem;
             }
         }
     }
